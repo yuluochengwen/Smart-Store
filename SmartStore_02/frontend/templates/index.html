@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartStore - 智能无人商店</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏪 SmartStore 智能无人商店</h1>
+            <p class="subtitle">体验未来购物新方式</p>
+        </header>
+
+        <main>
+            <!-- 顾客检测区域 -->
+            <section class="card">
+                <h2>👤 顾客检测</h2>
+                <div class="video-container">
+                    <video id="customer-video" autoplay></video>
+                    <canvas id="customer-canvas"></canvas>
+                </div>
+                <div class="info">
+                    <p>检测到的顾客数: <span id="customer-count">0</span></p>
+                </div>
+            </section>
+
+            <!-- 购物篮区域 -->
+            <section class="card">
+                <h2>🛒 购物篮</h2>
+                <div id="basket-items" class="basket-list">
+                    <!-- 购物篮项目将动态插入这里 -->
+                </div>
+                <div class="basket-total">
+                    <h3>总计: ¥<span id="basket-total">0.00</span></h3>
+                    <button id="checkout-btn" class="btn btn-primary">结算</button>
+                </div>
+            </section>
+
+            <!-- 语音交互区域 -->
+            <section class="card">
+                <h2>🎤 语音助手</h2>
+                <div class="voice-input">
+                    <button id="voice-btn" class="btn btn-voice">点击说话</button>
+                    <input type="text" id="question-input" placeholder="或输入您的问题..." />
+                    <button id="ask-btn" class="btn btn-secondary">提问</button>
+                </div>
+                <div id="voice-response" class="response-box">
+                    <p>您好！我是SmartStore智能助手，请问有什么可以帮您的？</p>
+                </div>
+            </section>
+
+            <!-- 商品推荐区域 -->
+            <section class="card">
+                <h2>⭐ 商品推荐</h2>
+                <div id="recommendations" class="product-grid">
+                    <!-- 推荐商品将动态插入这里 -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 SmartStore. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

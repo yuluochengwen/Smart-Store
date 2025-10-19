@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试 - 人脸检测</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        video, canvas {
+            width: 100%;
+            max-width: 640px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: block;
+            margin: 10px auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔍 人脸检测调试页面</h1>
+    
+    <div class="box">
+        <h2>步骤 1: 启动摄像头</h2>
+        <button id="btnStart">启动摄像头</button>
+        <div id="status1" class="status" style="display:none;"></div>
+        <video id="video" autoplay playsinline></video>
+    </div>
+    
+    <div class="box">
+        <h2>步骤 2: 查看画面捕获</h2>
+        <button id="btnCapture" disabled>捕获画面</button>
+        <canvas id="canvas"></canvas>
+    </div>
+    
+    <div class="box">
+        <h2>步骤 3: 测试 API 连接</h2>
+        <button id="btnTestAPI">测试 /api/v1/health</button>
+        <div id="status3" class="status" style="display:none;"></div>
+    </div>
+    
+    <div class="box">
+        <h2>步骤 4: 发送人脸检测请求</h2>
+        <button id="btnDetect" disabled>发送检测请求</button>
+        <div id="status4" class="status" style="display:none;"></div>
+        <pre id="result" style="background:#f8f9fa; padding:15px; border-radius:5px; max-height:300px; overflow:auto;"></pre>
+    </div>
+
+    <script>
+        let video, canvas, ctx, stream;
+
+        // 步骤 1: 启动摄像头
+        document.getElementById('btnStart').addEventListener('click', async function() {
+            const status = document.getElementById('status1');
+            video = document.getElementById('video');
+            
+            try {
+                status.className = 'status info';
+                status.style.display = 'block';
+                status.textContent = '正在请求摄像头权限...';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = function() {
+                    canvas = document.getElementById('canvas');
+                    ctx = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    status.className = 'status success';
+                    status.textContent = `✅ 摄像头已启动！分辨率: ${video.videoWidth}x${video.videoHeight}`;
+                    
+                    document.getElementById('btnCapture').disabled = false;
+                    document.getElementById('btnDetect').disabled = false;
+                };
+                
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ 错误: ' + error.message;
+            }
+        });
+
+        // 步骤 2: 捕获画面
+        document.getElementById('btnCapture').addEventListener('click', function() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                alert('画面已捕获到 Canvas！');
+            } else {
+                alert('视频未准备好！');
+            }
+        });
+
+        // 步骤 3: 测试 API
+        document.getElementById('btnTestAPI').addEventListener('click', async function() {
+            const status = document.getElementById('status3');
+            status.style.display = 'block';
+            status.className = 'status info';
+            status.textContent = '正在测试 API...';
+            
+            try {
+                const response = await fetch('/api/v1/health');
+                const data = await response.json();
+                
+                status.className = 'status success';
+                status.textContent = '✅ API 连接正常: ' + JSON.stringify(data);
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ API 错误: ' + error.message;
+            }
+        });
+
+        // 步骤 4: 发送检测请求
+        document.getElementById('btnDetect').addEventListener('click', async function() {
+            const status = document.getElementById('status4');
+            const result = document.getElementById('result');
+            
+            status.style.display = 'block';
+            status.className = 'status info';
+            status.textContent = '正在发送检测请求...';
+            result.textContent = '';
+            
+            try {
+                // 捕获当前帧
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                const base64Data = imageData.split(',')[1];
+                
+                console.log('发送数据大小:', (base64Data.length / 1024).toFixed(2), 'KB');
+                
+                const response = await fetch('/api/v1/customer/detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image: base64Data })
+                });
+                
+                const data = await response.json();
+                
+                console.log('API 响应:', data);
+                
+                if (data.success) {
+                    status.className = 'status success';
+                    status.textContent = '✅ 检测成功！';
+                    result.textContent = JSON.stringify(data, null, 2);
+                    
+                    // 显示结果
+                    if (data.data.recognized && data.data.user) {
+                        alert(`识别到用户: ${data.data.user.name}`);
+                    } else if (data.data.face_count > 0) {
+                        alert(`检测到 ${data.data.face_count} 个人脸，但未识别`);
+                    } else {
+                        alert('未检测到人脸');
+                    }
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ 检测失败: ' + data.message;
+                    result.textContent = JSON.stringify(data, null, 2);
+                }
+                
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ 请求错误: ' + error.message;
+                result.textContent = error.stack;
+            }
+        });
+    </script>
+</body>
+</html>
