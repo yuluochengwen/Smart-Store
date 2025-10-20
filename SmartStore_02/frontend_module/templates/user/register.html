@@ -1,65 +1,84 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册</title>
-    <!-- TODO: 路径修改 - 确保静态文件引用正确 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
-</head>
-<body>
-    <div class="login-container">
-        <h2>用户注册</h2>
-        
-        <!-- 显示flash消息 -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        <!-- TODO: 表单修改 - 确保action和method正确 -->
-    <form method="POST" action="{{ url_for('register_api') }}">
-            <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required placeholder="请输入用户名">
-            </div>
-            <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" required placeholder="请输入至少6位密码">
-            </div>
-            <div class="form-group">
-                <label for="email">邮箱</label>
-                <input type="email" id="email" name="email" required placeholder="请输入邮箱地址">
-                <!-- TODO: 功能扩展 - 添加手机号等其他字段 -->
-                <!-- <div class="form-group">
-                    <label for="phone">手机号</label>
-                    <input type="tel" id="phone" name="phone" required placeholder="请输入手机号">
-                </div> -->
-            </div>
-            <button type="submit" class="register-btn">注册</button>
-        </form>
-    <p>已有账号？<a href="{{ url_for('login') }}">立即登录</a></p>
+{% extends "base/base.html" %}
+
+{% block title %}用户注册 - SmartStore{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">用户注册</h1>
+    <p class="text-xl text-blue-100">创建您的 SmartStore 账户</p>
+  </div>
+</section>
+
+<section class="py-12">
+  <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      <form id="register-form" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+          <input name="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="请输入用户名">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+          <input name="email" type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="请输入邮箱">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+          <input name="password" type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="请输入密码">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+          <input name="confirmPassword" type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="请再次输入密码">
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg text-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all">
+          立即注册
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-600 mt-6">
+        已有账号？
+        <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-500 font-semibold">去登录</a>
+      </p>
     </div>
-    
-    <!-- TODO: 路径修改 - 确保JS文件引用正确 -->
-    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
-    <script>
-        // 简单的表单验证示例
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            if (password.length < 6) {
-                alert('密码长度不能少于6位');
-                e.preventDefault();
-            }
-        });
-    </script>
-</body>
-</html>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const payload = {
+      username: form.username.value.trim(),
+      email: form.email.value.trim(),
+      password: form.password.value,
+    };
+    if (form.password.value !== form.confirmPassword.value) {
+      alert('两次密码不一致');
+      return;
+    }
+    try {
+      const resp = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        alert('注册成功，去登录');
+  window.location.href = "{{ url_for('login') }}";
+      } else {
+        alert(data.message || '注册失败');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('网络异常，请稍后再试');
+    }
+  });
+</script>
+{% endblock %}

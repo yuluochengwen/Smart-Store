@@ -1,4 +1,6 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
+from pathlib import Path
 import json
 import os
 import time
@@ -6,6 +8,24 @@ import random
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+
+# 临时用户“数据库”存储（JSON 文件）
+DATA_DIR = Path(__file__).resolve().parent.parent / 'data_layer' / 'database' / 'models'
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+USERS_JSON = DATA_DIR / 'users.json'
+
+def _load_users():
+    if USERS_JSON.exists():
+        try:
+            with open(USERS_JSON, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def _save_users(users):
+    with open(USERS_JSON, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
 
 # Mock data
 PRODUCTS = [
@@ -142,6 +162,11 @@ def member_center():
 def payment():
     return render_template('user/payment.html')
 
+# 注册页路由
+@app.route('/user/register')
+def register():
+    return render_template('user/register.html')
+
 @app.route('/admin/admin_login')
 def admin_login():
     return render_template('admin/admin_login.html')
@@ -174,26 +199,12 @@ def get_categories():
 @app.route('/api/login', methods=['POST'])
 def login_api():
     data = request.get_json()
-    username = data.get('username')
+    account = (data.get('username') or '').strip()
     password = data.get('password')
     method = data.get('method', 'password')
-    
-    # Mock login logic
-    if method == 'password' and username and password:
-        return jsonify({
-            'success': True,
-            'user': {
-                'id': '1',
-                'username': username,
-                'email': f'{username}@example.com',
-                'phone': '138****8888',
-                'avatar': 'https://via.placeholder.com/100x100/3b82f6/ffffff?text=用户',
-                'points': 1280,
-                'level': 'VIP会员',
-                'membershipLevel': 'silver'
-            }
-        })
-    elif method == 'face':
+
+    if method == 'face':
+        # 人脸登录仍保留演示返回
         return jsonify({
             'success': True,
             'user': {
@@ -207,7 +218,35 @@ def login_api():
                 'membershipLevel': 'gold'
             }
         })
-    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+    if not account or not password:
+        return jsonify({'success': False, 'message': '请输入账号和密码'}), 400
+
+    # 支持用户名或邮箱登录
+    users = _load_users()
+    candidate = next((u for u in users if u.get('username') == account or u.get('email') == account.lower()), None)
+    if not candidate:
+        return jsonify({'success': False, 'message': '账号或密码错误'}), 401
+
+    if not candidate.get('passwordHash'):
+        return jsonify({'success': False, 'message': '该账号未设置密码'}), 401
+
+    if not check_password_hash(candidate['passwordHash'], password):
+        return jsonify({'success': False, 'message': '账号或密码错误'}), 401
+
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': candidate['id'],
+            'username': candidate['username'],
+            'email': candidate['email'],
+            'phone': candidate.get('phone', ''),
+            'avatar': candidate.get('avatar'),
+            'points': candidate.get('points', 0),
+            'level': candidate.get('level', ''),
+            'membershipLevel': candidate.get('membershipLevel', '')
+        }
+    })
 
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login_api():
@@ -231,27 +270,89 @@ def admin_login_api():
 @app.route('/api/register', methods=['POST'])
 def register_api():
     data = request.get_json()
-    username = data.get('username')
-    email = data.get('email')
+    username = (data.get('username') or '').strip()
+    email = (data.get('email') or '').strip().lower()
     password = data.get('password')
-    
-    # Mock registration logic
-    if username and email and password:
-        return jsonify({
-            'success': True,
-            'user': {
-                'id': '3',
-                'username': username,
-                'email': email,
-                'phone': '137****7777',
-                'avatar': 'https://via.placeholder.com/100x100/f59e0b/ffffff?text=新用户',
-                'points': 100,
-                'level': '铜牌会员',
-                'membershipLevel': 'bronze'
-            },
-            'message': '注册成功'
-        })
-    return jsonify({'success': False, 'message': '注册信息不完整'}), 400
+
+    if not username or not email or not password:
+        return jsonify({'success': False, 'message': '注册信息不完整'}), 400
+
+    users = _load_users()
+    if any(u.get('username') == username for u in users):
+        return jsonify({'success': False, 'message': '用户名已存在'}), 409
+    if any(u.get('email') == email for u in users):
+        return jsonify({'success': False, 'message': '邮箱已被使用'}), 409
+
+    new_user = {
+        'id': str(len(users) + 1),
+        'username': username,
+        'email': email,
+        'passwordHash': generate_password_hash(password),
+        'phone': '',
+        'avatar': 'https://via.placeholder.com/100x100/f59e0b/ffffff?text=新用户',
+        'points': 100,
+        'level': '铜牌会员',
+        'membershipLevel': 'bronze'
+    }
+    users.append(new_user)
+    _save_users(users)
+
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': new_user['id'],
+            'username': username,
+            'email': email,
+            'phone': new_user['phone'],
+            'avatar': new_user['avatar'],
+            'points': new_user['points'],
+            'level': new_user['level'],
+            'membershipLevel': new_user['membershipLevel']
+        },
+        'message': '注册成功'
+    })
+
+# 忘记密码页
+@app.route('/user/forgot_password')
+def forgot_password():
+    return render_template('user/forgot_password.html')
+
+# 申请重置密码（发送重置“令牌”）——演示实现：直接返回一个假 token
+@app.route('/api/password/forgot', methods=['POST'])
+def password_forgot_api():
+    data = request.get_json()
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'success': False, 'message': '请输入邮箱'}), 400
+    users = _load_users()
+    user = next((u for u in users if u.get('email') == email), None)
+    if not user:
+        return jsonify({'success': True, 'message': '如果邮箱存在，我们已发送重置邮件'}), 200
+    token = 'reset_' + str(int(time.time()))
+    user['resetToken'] = token
+    user['resetTokenExp'] = time.time() + 900  # 15分钟
+    _save_users(users)
+    return jsonify({'success': True, 'message': '已发送重置邮件', 'token': token})
+
+# 根据令牌重置密码
+@app.route('/api/password/reset', methods=['POST'])
+def password_reset_api():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('newPassword')
+    if not token or not new_password:
+        return jsonify({'success': False, 'message': '参数不完整'}), 400
+    users = _load_users()
+    user = next((u for u in users if u.get('resetToken') == token), None)
+    if not user:
+        return jsonify({'success': False, 'message': '无效或已过期的链接'}), 400
+    if user.get('resetTokenExp') and time.time() > user['resetTokenExp']:
+        return jsonify({'success': False, 'message': '重置链接已过期'}), 400
+    user['passwordHash'] = generate_password_hash(new_password)
+    user.pop('resetToken', None)
+    user.pop('resetTokenExp', None)
+    _save_users(users)
+    return jsonify({'success': True, 'message': '密码已更新'})
 
 @app.route('/api/orders')
 def get_orders():
