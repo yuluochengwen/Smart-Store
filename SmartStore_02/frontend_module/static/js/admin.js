@@ -10,6 +10,9 @@ class AdminManager {
         this.selectedOrders = new Set();
         this.inventoryData = [];
         this.ordersData = [];
+        this.apiOrders = { items: [], total: 0, page: 1, pageSize: 20 };
+        this.serverPaging = false;
+        this.usersCache = [];
         this.init();
     }
 
@@ -17,8 +20,13 @@ class AdminManager {
         this.initAdminLogin();
         this.initInventoryManage();
         this.initOrderManage();
+        this.initUserManagement();
         this.initCharts();
         this.loadData();
+        // 如果在仪表盘页面，尝试初始化仪表盘
+        if (document.getElementById('kpi-today-sales')) {
+            this.initDashboard();
+        }
     }
 
     /* Admin Login */
@@ -84,7 +92,7 @@ class AdminManager {
             
             // Redirect to inventory management
             setTimeout(() => {
-                window.location.href = '/admin/inventory_manage';
+                window.location.href = '/admin/dashboard';
             }, 1000);
             
         } catch (error) {
@@ -468,19 +476,26 @@ class AdminManager {
         const exportBtn = document.getElementById('export-orders');
         const batchBtn = document.getElementById('batch-process');
         const selectAll = document.getElementById('select-all');
+        const perPageSel = document.getElementById('orders-per-page');
+
+        // 如果存在订单表，改为服务端分页模式
+        if (document.getElementById('orders-table-body')) {
+            this.serverPaging = true;
+        }
 
         if (searchInput) {
             searchInput.addEventListener('input', smartStore.debounce(() => {
-                this.filterOrders();
+                this.currentPage = 1;
+                this.reloadOrdersFromApi();
             }, 300));
         }
 
         if (statusFilter) {
-            statusFilter.addEventListener('change', () => this.filterOrders());
+            statusFilter.addEventListener('change', () => { this.currentPage = 1; this.reloadOrdersFromApi(); });
         }
 
         if (dateFilter) {
-            dateFilter.addEventListener('change', () => this.filterOrders());
+            dateFilter.addEventListener('change', () => { this.currentPage = 1; this.reloadOrdersFromApi(); });
         }
 
         if (exportBtn) {
@@ -497,8 +512,185 @@ class AdminManager {
             });
         }
 
+        if (perPageSel) {
+            perPageSel.addEventListener('change', () => {
+                this.itemsPerPage = Number(perPageSel.value || 20);
+                this.apiOrders.pageSize = this.itemsPerPage;
+                this.currentPage = 1;
+                this.reloadOrdersFromApi();
+            });
+        }
+
         this.initOrderDetailModal();
         this.initStatusUpdateModal();
+
+        // 首次加载
+        if (this.serverPaging) {
+            this.reloadOrdersFromApi();
+        }
+    }
+
+    buildOrderQuery() {
+        const q = (document.getElementById('order-search')?.value || '').trim();
+        const status = document.getElementById('status-filter')?.value || '';
+        const dateRange = document.getElementById('date-filter')?.value || '';
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (status) params.set('status', status);
+        if (dateRange && dateRange !== 'all') params.set('dateRange', dateRange);
+        params.set('page', this.currentPage);
+        params.set('pageSize', this.itemsPerPage);
+        return params.toString();
+    }
+
+    async reloadOrdersFromApi() {
+        if (!this.serverPaging) return;
+        const query = this.buildOrderQuery();
+        try {
+            const resp = await fetch(`/api/admin/orders?${query}`);
+            const data = await resp.json();
+            this.apiOrders = data;
+            this.currentPage = data.page;
+            this.itemsPerPage = data.pageSize;
+            this.renderOrdersTableFromApi();
+        } catch (e) {
+            smartStore.showToast('订单加载失败', 'error');
+        }
+    }
+
+    renderOrdersTableFromApi() {
+        const tableBody = document.getElementById('orders-table-body');
+        if (!tableBody) return;
+        const items = this.apiOrders.items || [];
+        tableBody.innerHTML = items.map(order => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">
+                    <input type="checkbox" class="order-checkbox rounded text-blue-600 focus:ring-blue-500" 
+                           value="${order.id}" onchange="adminManager.toggleOrderSelection('${order.id}')">
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center">
+                        <div>
+                            <div class="font-medium text-gray-900">#${order.id}</div>
+                            <div class="text-sm text-gray-500">${(order.items||[]).map(i => i.name).join(', ')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900">${order.customerName||''}</div>
+                    <div class="text-sm text-gray-500">${order.customerPhone||''}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">¥${Number(order.total||0).toFixed(2)}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${this.getOrderStatusColor(order.status)}">
+                        ${order.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500">${order.date}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="adminManager.showOrderDetail('${order.id}')" 
+                                class="text-blue-600 hover:text-blue-900 text-sm">
+                            <i class="fas fa-eye mr-1"></i>详情
+                        </button>
+                        <button onclick="adminManager.showStatusUpdateModal('${order.id}')" 
+                                class="text-green-600 hover:text-green-900 text-sm">
+                            <i class="fas fa-edit mr-1"></i>状态
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        this.updateOrdersPagination(this.apiOrders.total || 0);
+    }
+
+    /* User Management */
+    initUserManagement() {
+        const tableBody = document.getElementById('user-table-body');
+        if (!tableBody) return; // 不在用户管理页
+        const search = document.getElementById('user-search');
+        const addBtn = document.getElementById('add-user');
+        const modal = document.getElementById('user-modal');
+        const closeBtn = document.getElementById('close-user-modal');
+        const cancelBtn = document.getElementById('cancel-user');
+        const form = document.getElementById('user-form');
+
+        const refresh = async () => {
+            const resp = await fetch('/api/admin/users');
+            this.usersCache = await resp.json();
+            this.renderUsers();
+        };
+
+        this.renderUsers = () => {
+            const q = (search?.value || '').trim();
+            const rows = this.usersCache.filter(u => !q || u.username.includes(q) || (u.email||'').includes(q));
+            tableBody.innerHTML = rows.map(u => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-3">${u.username}</td>
+                    <td class="px-6 py-3">${u.email||''}</td>
+                    <td class="px-6 py-3">${u.role||'user'}</td>
+                    <td class="px-6 py-3">${u.status||'active'}</td>
+                    <td class="px-6 py-3">
+                        <button class="text-blue-600 mr-3" onclick="adminManager.openEditUser('${u.id}')">编辑</button>
+                        <button class="text-red-600" onclick="adminManager.deleteUser('${u.id}')">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        if (search) search.addEventListener('input', smartStore.debounce(() => this.renderUsers(), 300));
+        if (addBtn) addBtn.addEventListener('click', () => { this.openAddUser(); });
+        if (closeBtn) closeBtn.addEventListener('click', () => smartStore.closeModal('user-modal'));
+        if (cancelBtn) cancelBtn.addEventListener('click', () => smartStore.closeModal('user-modal'));
+
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const payload = {
+                    username: formData.get('username'),
+                    email: formData.get('email'),
+                    role: formData.get('role')
+                };
+                if (this.editingUserId) {
+                    await fetch(`/api/admin/users/${this.editingUserId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                } else {
+                    await fetch(`/api/admin/users`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                }
+                smartStore.closeModal('user-modal');
+                this.editingUserId = null;
+                await refresh();
+            });
+        }
+
+        this.openAddUser = () => {
+            document.getElementById('modal-title').textContent = '添加用户';
+            form.reset();
+            this.editingUserId = null;
+            smartStore.openModal('user-modal');
+        };
+
+        this.openEditUser = (uid) => {
+            document.getElementById('modal-title').textContent = '编辑用户';
+            const u = this.usersCache.find(x => x.id === uid);
+            if (!u) return;
+            form.username.value = u.username || '';
+            form.email.value = u.email || '';
+            form.role.value = u.role || 'user';
+            this.editingUserId = uid;
+            smartStore.openModal('user-modal');
+        };
+
+        this.deleteUser = async (uid) => {
+            if (!confirm('确定删除该用户？')) return;
+            await fetch(`/api/admin/users/${uid}`, {method:'DELETE'});
+            await refresh();
+        };
+
+        // 首次加载
+        refresh();
     }
 
     initOrderDetailModal() {
@@ -532,7 +724,10 @@ class AdminManager {
     }
 
     showOrderDetail(orderId) {
-        const order = this.ordersData.find(o => o.id === orderId);
+        let order = this.ordersData.find(o => o.id === orderId);
+        if (!order && this.serverPaging) {
+            order = (this.apiOrders.items || []).find(o => o.id === orderId);
+        }
         if (!order) return;
 
         const content = document.getElementById('order-detail-content');
@@ -547,7 +742,7 @@ class AdminManager {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">下单时间:</span>
-                            <span class="font-medium">${order.date}</span>
+                            <span class="font-medium">${order.date || ''}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">订单状态:</span>
@@ -555,7 +750,7 @@ class AdminManager {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">支付方式:</span>
-                            <span class="font-medium">${order.paymentMethod}</span>
+                            <span class="font-medium">${order.paymentMethod || ''}</span>
                         </div>
                     </div>
                 </div>
@@ -565,15 +760,15 @@ class AdminManager {
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-600">客户姓名:</span>
-                            <span class="font-medium">${order.customerName}</span>
+                            <span class="font-medium">${order.customerName || ''}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">手机号:</span>
-                            <span class="font-medium">${order.customerPhone}</span>
+                            <span class="font-medium">${order.customerPhone || ''}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">配送地址:</span>
-                            <span class="font-medium">${order.address}</span>
+                            <span class="font-medium">${order.address || ''}</span>
                         </div>
                     </div>
                 </div>
@@ -582,7 +777,7 @@ class AdminManager {
             <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="font-semibold text-gray-900 mb-3">商品详情</h4>
                 <div class="space-y-3">
-                    ${order.items.map(item => `
+                    ${(order.items||[]).map(item => `
                         <div class="flex justify-between items-center">
                             <div class="flex items-center">
                                 <img src="${item.image}" alt="${item.name}" class="w-12 h-12 rounded-lg object-cover mr-3">
@@ -599,7 +794,7 @@ class AdminManager {
                 <div class="border-t mt-4 pt-4">
                     <div class="flex justify-between items-center text-lg font-semibold">
                         <span>总计:</span>
-                        <span class="text-blue-600">¥${order.total.toFixed(2)}</span>
+                        <span class="text-blue-600">¥${Number(order.total||0).toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -615,7 +810,7 @@ class AdminManager {
 
     async updateOrderStatus(e) {
         const formData = new FormData(e.target);
-        const newStatus = formData.get('status');
+        const newStatus = (document.getElementById('new-order-status')?.value) || formData.get('status');
         const note = formData.get('note');
 
         if (!newStatus) {
@@ -634,12 +829,20 @@ class AdminManager {
             if (order) {
                 order.status = this.getStatusDisplayName(newStatus);
             }
+            if (this.serverPaging) {
+                const apiItem = (this.apiOrders.items || []).find(o => o.id === this.currentOrderId);
+                if (apiItem) apiItem.status = newStatus;
+            }
 
             smartStore.hideLoading();
             smartStore.showToast('订单状态更新成功！', 'success');
             smartStore.closeModal('status-update-modal');
             
-            this.renderOrdersTable();
+            if (this.serverPaging) {
+                this.renderOrdersTableFromApi();
+            } else {
+                this.renderOrdersTable();
+            }
             
         } catch (error) {
             smartStore.hideLoading();
@@ -664,9 +867,12 @@ class AdminManager {
         if (!tableBody) return;
 
         const items = data || this.ordersData;
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-        const endIndex = startIndex + this.itemsPerPage;
-        const pageItems = items.slice(startIndex, endIndex);
+        let pageItems = items;
+        if (!this.serverPaging) {
+            const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+            const endIndex = startIndex + this.itemsPerPage;
+            pageItems = items.slice(startIndex, endIndex);
+        }
 
         tableBody.innerHTML = pageItems.map(order => `
             <tr class="hover:bg-gray-50">
@@ -710,30 +916,67 @@ class AdminManager {
             </tr>
         `).join('');
 
-        this.updateOrdersPagination(items.length);
+        this.updateOrdersPagination(this.serverPaging ? (this.apiOrders?.total || 0) : items.length);
     }
 
     getOrderStatusColor(status) {
         const colors = {
+            // 中文
             '待支付': 'bg-yellow-100 text-yellow-800',
             '已支付': 'bg-blue-100 text-blue-800',
             '处理中': 'bg-purple-100 text-purple-800',
             '已发货': 'bg-orange-100 text-orange-800',
             '已送达': 'bg-green-100 text-green-800',
-            '已取消': 'bg-red-100 text-red-800'
+            '已取消': 'bg-red-100 text-red-800',
+            // 英文
+            'pending': 'bg-yellow-100 text-yellow-800',
+            'paid': 'bg-blue-100 text-blue-800',
+            'processing': 'bg-purple-100 text-purple-800',
+            'shipped': 'bg-orange-100 text-orange-800',
+            'delivered': 'bg-green-100 text-green-800',
+            'cancelled': 'bg-red-100 text-red-800'
         };
         return colors[status] || 'bg-gray-100 text-gray-800';
     }
 
     updateOrdersPagination(totalItems) {
-        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage) || 1;
         const pageStart = document.getElementById('orders-page-start');
         const pageEnd = document.getElementById('orders-page-end');
         const totalOrders = document.getElementById('total-orders-count');
+        const controls = document.getElementById('orders-pagination-controls');
 
-        if (pageStart) pageStart.textContent = Math.min((this.currentPage - 1) * this.itemsPerPage + 1, totalItems);
+        if (pageStart) pageStart.textContent = totalItems === 0 ? 0 : Math.min((this.currentPage - 1) * this.itemsPerPage + 1, totalItems);
         if (pageEnd) pageEnd.textContent = Math.min(this.currentPage * this.itemsPerPage, totalItems);
         if (totalOrders) totalOrders.textContent = totalItems;
+
+        if (controls) {
+            const makeBtn = (label, page, disabled=false, active=false) => `
+                <button ${disabled?'disabled':''} data-page="${page}" class="px-3 py-1 rounded border ${active?'bg-blue-600 text-white':'bg-white text-gray-700 hover:bg-gray-100'}">
+                    ${label}
+                </button>`;
+            const windowSize = 5;
+            let start = Math.max(1, this.currentPage - Math.floor(windowSize/2));
+            let end = Math.min(totalPages, start + windowSize - 1);
+            start = Math.max(1, Math.min(start, totalPages - windowSize + 1));
+            let html = '';
+            html += makeBtn('«', Math.max(1, this.currentPage - 1), this.currentPage===1);
+            for (let p = start; p <= end; p++) {
+                html += makeBtn(p, p, false, p === this.currentPage);
+            }
+            html += makeBtn('»', Math.min(totalPages, this.currentPage + 1), this.currentPage===totalPages);
+            controls.innerHTML = html;
+            controls.querySelectorAll('button[data-page]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const p = Number(btn.getAttribute('data-page'));
+                    if (p && p !== this.currentPage) {
+                        this.currentPage = p;
+                        if (this.serverPaging) this.reloadOrdersFromApi();
+                        else this.renderOrdersTable();
+                    }
+                });
+            });
+        }
     }
 
     toggleOrderSelection(orderId) {
@@ -757,7 +1000,9 @@ class AdminManager {
     }
 
     exportOrders() {
-        smartStore.showToast('导出功能开发中...', 'info');
+        // 导出当前筛选结果
+        const query = this.buildOrderQuery();
+        window.location.href = `/api/admin/orders/export?${query}`;
     }
 
     showBatchProcess() {
@@ -775,6 +1020,82 @@ class AdminManager {
         this.loadTopProducts();
         this.loadRecentActivities();
     }
+
+        /* Dashboard Visualization */
+        initDashboard() {
+                const $ = (id) => document.getElementById(id);
+
+                // KPI 指标
+                fetch('/api/admin/metrics').then(r => r.json()).then(d => {
+                        if ($('kpi-today-sales')) $('kpi-today-sales').textContent = `¥${Number(d.todaySales || 0).toFixed(2)}`;
+                        if ($('kpi-today-orders')) $('kpi-today-orders').textContent = d.todayOrders || 0;
+                        if ($('kpi-users')) $('kpi-users').textContent = d.registeredUsers || 0;
+                        if ($('kpi-products')) $('kpi-products').textContent = d.productsTotal || 0;
+                        if ($('kpi-growth-sales')) $('kpi-growth-sales').textContent = d.growth?.sales || '+0%';
+                        if ($('kpi-growth-orders')) $('kpi-growth-orders').textContent = d.growth?.orders || '+0%';
+                }).catch(() => {});
+
+                // 销售趋势图
+                fetch('/api/admin/sales/trend').then(r => r.json()).then(rows => {
+                        const el = document.getElementById('sales-trend-chart');
+                        if (!el || !window.echarts) return;
+                        const chart = echarts.init(el);
+                        chart.setOption({
+                                tooltip: { trigger: 'axis' },
+                                legend: { data: ['销售额', '订单数'] },
+                                grid: { left: 40, right: 30, top: 30, bottom: 30 },
+                                xAxis: { type: 'category', data: rows.map(r => r.date) },
+                                yAxis: [{ type: 'value', name: '销售额(¥)' }, { type: 'value', name: '订单数' }],
+                                series: [
+                                        { name: '销售额', type: 'line', smooth: true, areaStyle: {}, data: rows.map(r => r.sales) },
+                                        { name: '订单数', type: 'bar', yAxisIndex: 1, barWidth: 18, data: rows.map(r => r.orders) }
+                                ]
+                        });
+                        window.addEventListener('resize', () => chart.resize());
+                }).catch(() => {});
+
+                // 热销 TOP5
+                    // 热销 TOP5（带范围）
+                    const topRangeSel = document.getElementById('top-range');
+                    const topRange = topRangeSel ? topRangeSel.value : 14;
+                    fetch(`/api/admin/products/top?range=${topRange}`).then(r => r.json()).then(rows => {
+                        const el = document.getElementById('top-products-chart');
+                        if (!el || !window.echarts) return;
+                        const chart = echarts.init(el);
+                        chart.setOption({
+                                tooltip: { trigger: 'item' },
+                                xAxis: { type: 'value' },
+                                yAxis: { type: 'category', data: rows.map(x => x.name) },
+                                series: [{ type: 'bar', data: rows.map(x => x.sales), itemStyle: { color: '#7c3aed' } }]
+                        });
+                        window.addEventListener('resize', () => chart.resize());
+                }).catch(() => {});
+
+                // 最近交易列表
+                    // 最近交易（带范围）
+                    const recentRangeSel = document.getElementById('recent-range');
+                    const recentRange = recentRangeSel ? recentRangeSel.value : 14;
+                    fetch(`/api/admin/orders/recent?range=${recentRange}`).then(r => r.json()).then(list => {
+                        const box = document.getElementById('recent-transactions');
+                        if (!box) return;
+                        box.innerHTML = list.map(o => `
+                            <div class="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">#${'${'}o.id${'}'} · ¥${'${'}o.amount.toFixed(2)${'}'}</div>
+                                        <div class="text-sm text-gray-500">${'${'}o.user${'}'} · ${'${'}o.time${'}'}</div>
+                                    </div>
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded-full ${'${'}o.status==='paid'?'bg-green-100 text-green-700':o.status==='shipped'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'${'}'}">
+                                    ${'${'}o.status${'}'}
+                                </span>
+                            </div>
+                        `).join('');
+                }).catch(() => {});
+        }
 
     initSalesChart() {
         const chartContainer = document.getElementById('sales-chart');
@@ -966,7 +1287,7 @@ class AdminManager {
                 this.renderInventoryTable();
             }
             
-            if (document.getElementById('orders-table-body')) {
+            if (document.getElementById('orders-table-body') && !this.serverPaging) {
                 this.renderOrdersTable();
             }
             

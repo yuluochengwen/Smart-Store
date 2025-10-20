@@ -1,6 +1,7 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from pathlib import Path
+import datetime as dt
 import json
 import os
 import time
@@ -179,6 +180,32 @@ def inventory_manage():
 def order_manage():
     return render_template('admin/order_manage.html')
 
+
+
+
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    return render_template('admin/admin_dashboard.html')
+
+@app.route('/admin/sales_analysis')
+def sales_analysis():
+    return render_template('admin/sales_analysis.html')
+
+@app.route('/admin/user_management')
+def user_management():
+    return render_template('admin/user_management.html')
+
+@app.route('/admin/system_settings')
+def system_settings():
+    return render_template('admin/system_settings.html')
+
+
+
+
+
+
+
 # API endpoints
 @app.route('/api/products')
 def get_products():
@@ -195,6 +222,240 @@ def get_product(product_id):
 def get_categories():
     categories = list(set(p['category'] for p in PRODUCTS))
     return jsonify(categories)
+
+# ---------------- Admin Dashboard APIs ----------------
+def _mock_orders(days: int = 14):
+    today = dt.date.today()
+    data = []
+    for i in range(days):
+        d = today - dt.timedelta(days=days - 1 - i)
+        orders = random.randint(0, 12)
+        sales = round(orders * random.uniform(20, 80), 2)
+        data.append({'date': d.strftime('%Y-%m-%d'), 'orders': orders, 'sales': sales})
+    return data
+
+@app.route('/api/admin/metrics')
+def api_admin_metrics():
+    users = _load_users()
+    trend = _mock_orders(14)
+    today_row = trend[-1] if trend else {'sales': 0, 'orders': 0}
+    return jsonify({
+        'todaySales': today_row['sales'],
+        'todayOrders': today_row['orders'],
+        'registeredUsers': len(users),
+        'productsTotal': len(PRODUCTS),
+        'growth': {'sales': '+0%', 'orders': '+0%'}
+    })
+
+@app.route('/api/admin/sales/trend')
+def api_admin_sales_trend():
+    return jsonify(_mock_orders(14))
+
+
+# ------------------------------------------------------
+
+# ---------------- Sales Analysis (multi-dimension) ----------------
+def _mock_categories():
+    return ['饮料', '零食', '日化', '电子']
+
+def _mock_channels():
+    return ['门店', '自助机', '小程序', 'APP']
+
+def _date_list(granularity: str, length: int):
+    today = dt.date.today()
+    if granularity == 'week':
+        return [(today - dt.timedelta(weeks=length-1-i)).strftime('%Y-W%U') for i in range(length)]
+    if granularity == 'month':
+        # 粗略按30天回退，格式 YYYY-MM
+        base = today.replace(day=1)
+        dates = []
+        for i in range(length):
+            d = base - dt.timedelta(days=30*(length-1-i))
+            dates.append(d.strftime('%Y-%m'))
+        return dates
+    # default day
+    return [(today - dt.timedelta(days=length-1-i)).strftime('%Y-%m-%d') for i in range(length)]
+
+@app.route('/api/admin/sales/analysis')
+def api_admin_sales_analysis():
+    granularity = request.args.get('granularity', 'day')  # day|week|month
+    dimension = request.args.get('dimension', 'category')  # category|channel
+    rng = int(request.args.get('range', '14'))  # 7|14|30|90
+
+    x = _date_list(granularity, rng if rng > 0 else 14)
+    data = []
+    groups = _mock_categories() if dimension == 'category' else _mock_channels()
+    for g in groups:
+        series = [round(random.uniform(200, 2000), 2) for _ in x]
+        data.append({'name': g, 'data': series})
+    return jsonify({'x': x, 'series': data, 'dimension': dimension, 'granularity': granularity})
+
+# 允许范围参数的 recent 与 top 接口
+def _range_to_days(r):
+    try:
+        r = int(r)
+        return max(1, min(365, r))
+    except Exception:
+        return 14
+
+@app.route('/api/admin/orders/recent')
+def api_admin_orders_recent():
+    rng = _range_to_days(request.args.get('range', 14))
+    recent = []
+    now = dt.datetime.now()
+    for i in range(min(50, rng*3)):
+        recent.append({
+            'id': f"ORD{now.strftime('%m%d')}{i+1:03d}",
+            'user': f'user_{i+1}',
+            'amount': round(random.uniform(19, 299), 2),
+            'time': (now - dt.timedelta(minutes=15*i)).strftime('%Y-%m-%d %H:%M'),
+            'status': random.choice(['paid', 'processing', 'shipped'])
+        })
+    return jsonify(recent)
+
+@app.route('/api/admin/products/top')
+def api_admin_products_top():
+    rng = _range_to_days(request.args.get('range', 14))  # 目前未直接使用，仅预留
+    items = [
+        {'name': '智能矿泉水', 'sales': random.randint(50, 200)},
+        {'name': '有机薯片', 'sales': random.randint(50, 200)},
+        {'name': '低糖饼干', 'sales': random.randint(50, 200)},
+        {'name': '功能饮料', 'sales': random.randint(50, 200)},
+        {'name': '坚果礼盒', 'sales': random.randint(50, 200)},
+    ]
+    return jsonify(items)
+
+# ---------------- Orders list with pagination/export ----------------
+def _mock_orders_pool(count=120):
+    names = ['张三', '李四', '王五', '赵六', '小明', '小红']
+    products = ['智能矿泉水', '有机薯片', '低糖饼干', '功能饮料', '坚果礼盒', '充电宝']
+    arr = []
+    now = dt.datetime.now()
+    for i in range(count):
+        created = now - dt.timedelta(days=random.randint(0, 90), minutes=random.randint(0, 1440))
+        items = random.sample(products, k=random.randint(1, 3))
+        total = round(random.uniform(20, 300), 2)
+        arr.append({
+            'id': f'ORD{created.strftime("%Y%m%d%H%M")}{i:03d}',
+            'customerName': random.choice(names),
+            'customerPhone': f"13{random.randint(5,9)}****{random.randint(1000,9999)}",
+            'address': '演示地址',
+            'total': total,
+            'status': random.choice(['待支付','已支付','处理中','已发货','已送达','已取消']),
+            'date': created.strftime('%Y-%m-%d %H:%M:%S'),
+            'items': [{'name': n, 'quantity': random.randint(1, 3), 'price': round(random.uniform(3, 120),2)} for n in items]
+        })
+    # 新到旧排序
+    arr.sort(key=lambda x: x['date'], reverse=True)
+    return arr
+
+ORDERS_POOL = _mock_orders_pool()
+
+def _filter_orders(data, q=None, status=None, date_range=None):
+    res = data
+    if q:
+        q = q.strip()
+        res = [o for o in res if q in o['id'] or q in o['customerName'] or q in o['customerPhone']]
+    if status:
+        # 前端传英文字段也兼容
+        mapping = {
+            'pending': '待支付','paid': '已支付','processing': '处理中','shipped': '已发货','delivered': '已送达','cancelled': '已取消'
+        }
+        zh = mapping.get(status, status)
+        res = [o for o in res if o['status'] == zh]
+    if date_range in ('today','week','month'):
+        now = dt.datetime.now()
+        def in_range(d):
+            t = dt.datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
+            if date_range == 'today':
+                return t.date() == now.date()
+            if date_range == 'week':
+                return (now - t).days < 7
+            if date_range == 'month':
+                return (now - t).days < 30
+        res = [o for o in res if in_range(o['date'])]
+    return res
+
+@app.route('/api/admin/orders')
+def api_admin_orders():
+    q = request.args.get('q')
+    status = request.args.get('status')
+    date_range = request.args.get('dateRange')
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('pageSize', 20))
+
+    data = _filter_orders(ORDERS_POOL, q, status, date_range)
+    total = len(data)
+    start = max(0, (page-1) * page_size)
+    end = start + page_size
+    items = data[start:end]
+    return jsonify({'items': items, 'total': total, 'page': page, 'pageSize': page_size})
+
+@app.route('/api/admin/orders/export')
+def api_admin_orders_export():
+    q = request.args.get('q')
+    status = request.args.get('status')
+    date_range = request.args.get('dateRange')
+    data = _filter_orders(ORDERS_POOL, q, status, date_range)
+    # 生成 CSV
+    lines = ['订单号,客户,电话,金额,状态,时间']
+    for o in data:
+        lines.append(f"{o['id']},{o['customerName']},{o['customerPhone']},{o['total']},{o['status']},{o['date']}")
+    csv = '\n'.join(lines)
+    return Response(csv, mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=orders.csv'})
+
+# ---------------- Users CRUD ----------------
+@app.route('/api/admin/users', methods=['GET', 'POST'])
+def api_admin_users():
+    if request.method == 'GET':
+        users = _load_users()
+        # 简化返回
+        for u in users:
+            u.setdefault('role', 'user')
+            u.setdefault('status', 'active')
+        return jsonify(users)
+    # POST create
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    role = data.get('role', 'user')
+    if not username or not email:
+        return jsonify({'success': False, 'message': '用户名和邮箱必填'}), 400
+    users = _load_users()
+    if any(u.get('username') == username for u in users):
+        return jsonify({'success': False, 'message': '用户名已存在'}), 409
+    if any(u.get('email') == email for u in users):
+        return jsonify({'success': False, 'message': '邮箱已存在'}), 409
+    new_user = {
+        'id': str(len(users) + 1),
+        'username': username,
+        'email': email,
+        'role': role,
+        'status': 'active',
+        'points': 0,
+        'membershipLevel': 'bronze'
+    }
+    users.append(new_user)
+    _save_users(users)
+    return jsonify({'success': True, 'user': new_user})
+
+@app.route('/api/admin/users/<uid>', methods=['PUT', 'DELETE'])
+def api_admin_user_detail(uid):
+    users = _load_users()
+    user = next((u for u in users if u.get('id') == uid), None)
+    if not user:
+        return jsonify({'success': False, 'message': '用户不存在'}), 404
+    if request.method == 'DELETE':
+        users = [u for u in users if u.get('id') != uid]
+        _save_users(users)
+        return jsonify({'success': True})
+    # PUT update
+    data = request.get_json() or {}
+    for k in ['username', 'email', 'role', 'status']:
+        if k in data and data[k]:
+            user[k] = data[k]
+    _save_users(users)
+    return jsonify({'success': True, 'user': user})
 
 @app.route('/api/login', methods=['POST'])
 def login_api():
