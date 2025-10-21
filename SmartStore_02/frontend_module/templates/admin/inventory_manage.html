@@ -1,0 +1,295 @@
+{% extends "base/base.html" %}
+
+{% block title %}库存管理 - SmartStore{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <section class="page-header bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">库存管理</h1>
+                    <p class="text-blue-100">实时监控商品库存状态</p>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                        <div class="text-sm text-blue-100">总商品数</div>
+                        <div class="text-2xl font-bold" id="total-products">0</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                        <div class="text-sm text-blue-100">低库存商品</div>
+                        <div class="text-2xl font-bold text-yellow-300" id="low-stock-count">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <section class="inventory-manage py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Controls -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Search and Filter -->
+                    <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div class="relative flex-1">
+                            <input type="text" id="inventory-search" placeholder="搜索商品名称或SKU..."
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <select id="category-filter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">所有分类</option>
+                            <option value="beverages">饮料</option>
+                            <option value="snacks">零食</option>
+                            <option value="daily">日用品</option>
+                            <option value="electronics">电子产品</option>
+                        </select>
+                        <select id="stock-filter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">库存状态</option>
+                            <option value="low">低库存</option>
+                            <option value="out">缺货</option>
+                            <option value="normal">正常</option>
+                            <option value="high">充足</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center space-x-3">
+                        <button id="export-inventory" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>导出库存
+                        </button>
+                        <button id="add-product" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>添加商品
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Table -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <!-- Table Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">商品库存列表</h3>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">每页显示:</span>
+                            <select id="items-per-page" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                                <option value="20">20条</option>
+                                <option value="50">50条</option>
+                                <option value="100">100条</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Table Content -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">商品信息</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前库存</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Table rows will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="bg-gray-50 px-6 py-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            显示第 <span id="page-start">1</span> - <span id="page-end">20</span> 条，共 <span id="total-items">0</span> 条记录
+                        </div>
+                        <div id="pagination-controls" class="flex items-center space-x-2">
+                            <!-- Pagination buttons will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Stock Alert Panel -->
+    <div id="stock-alert-panel" class="fixed right-4 top-20 w-80 bg-white rounded-2xl shadow-2xl z-40 transform translate-x-full transition-transform duration-300">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">库存预警</h3>
+                <button id="close-alert-panel" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 max-h-96 overflow-y-auto">
+            <div id="stock-alerts" class="space-y-4">
+                <!-- Alert items will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="p-6 border-t">
+            <button id="mark-all-read" class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                全部标记为已读
+            </button>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Product Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-900">添加商品</h3>
+                <button id="close-product-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="product-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="product-name" class="block text-sm font-medium text-gray-700 mb-2">商品名称</label>
+                        <input type="text" id="product-name" name="name" required
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="product-sku" class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
+                        <input type="text" id="product-sku" name="sku" required
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="product-category" class="block text-sm font-medium text-gray-700 mb-2">分类</label>
+                        <select id="product-category" name="category" required
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">选择分类</option>
+                            <option value="beverages">饮料</option>
+                            <option value="snacks">零食</option>
+                            <option value="daily">日用品</option>
+                            <option value="electronics">电子产品</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="product-price" class="block text-sm font-medium text-gray-700 mb-2">价格 (¥)</label>
+                        <input type="number" id="product-price" name="price" step="0.01" required
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="product-stock" class="block text-sm font-medium text-gray-700 mb-2">库存数量</label>
+                        <input type="number" id="product-stock" name="stock" min="0" required
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="product-min-stock" class="block text-sm font-medium text-gray-700 mb-2">最低库存预警</label>
+                        <input type="number" id="product-min-stock" name="min_stock" min="1"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="product-description" class="block text-sm font-medium text-gray-700 mb-2">商品描述</label>
+                    <textarea id="product-description" name="description" rows="3"
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">商品图片</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <input type="file" id="product-images" name="images" multiple accept="image/*" class="hidden">
+                        <div class="cursor-pointer" onclick="document.getElementById('product-images').click()">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600">点击上传商品图片</p>
+                            <p class="text-sm text-gray-500">支持 JPG、PNG 格式，最多5张</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancel-product" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" id="save-product" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        保存商品
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Stock Adjustment Modal -->
+    <div id="stock-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">库存调整</h3>
+                <p class="text-gray-600">调整商品库存数量</p>
+            </div>
+            
+            <form id="stock-form" class="space-y-6">
+                <div>
+                    <label for="stock-product-name" class="block text-sm font-medium text-gray-700 mb-2">商品名称</label>
+                    <input type="text" id="stock-product-name" readonly
+                           class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2">
+                </div>
+                
+                <div>
+                    <label for="current-stock" class="block text-sm font-medium text-gray-700 mb-2">当前库存</label>
+                    <input type="number" id="current-stock" readonly
+                           class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2">
+                </div>
+                
+                <div>
+                    <label for="stock-change" class="block text-sm font-medium text-gray-700 mb-2">调整数量</label>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="stock-decrease" class="w-10 h-10 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <input type="number" id="stock-change" value="0" class="flex-1 text-center border border-gray-300 rounded-lg py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button type="button" id="stock-increase" class="w-10 h-10 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">正数表示入库，负数表示出库</p>
+                </div>
+                
+                <div>
+                    <label for="stock-reason" class="block text-sm font-medium text-gray-700 mb-2">调整原因</label>
+                    <select id="stock-reason" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">选择原因</option>
+                        <option value="purchase">采购入库</option>
+                        <option value="return">退货入库</option>
+                        <option value="sale">销售出库</option>
+                        <option value="damage">损坏出库</option>
+                        <option value="adjustment">库存调整</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancel-stock" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" id="save-stock" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        确认调整
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

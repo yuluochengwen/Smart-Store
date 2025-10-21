@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能演示 - SmartStore</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .demo-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+        }
+        
+        .demo-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .demo-content {
+            padding: 3rem 2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 2rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-description {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .demo-actions {
+            text-align: center;
+            padding: 2rem;
+            background: #f1f5f9;
+            border-radius: 15px;
+        }
+        
+        .demo-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .demo-btn.secondary {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+        
+        .demo-btn.tertiary {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        }
+        
+        .demo-section {
+            margin-bottom: 3rem;
+        }
+        
+        .demo-section h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .demo-section p {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .status-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4f46e5;
+            display: block;
+        }
+        
+        .status-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .demo-header {
+                padding: 2rem 1rem;
+            }
+            
+            .demo-header h1 {
+                font-size: 2rem;
+            }
+            
+            .demo-content {
+                padding: 2rem 1rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .system-status {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🚀 SmartStore 高级功能演示</h1>
+            <p>体验无人商店的智能化功能，包括AI推荐、实时监控、安全支付等</p>
+        </div>
+        
+        <div class="demo-content">
+            <!-- 核心功能展示 -->
+            <div class="demo-section">
+                <h2>核心功能模块</h2>
+                <p>我们为您提供了完整的无人商店解决方案，包含以下高级功能：</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card" onclick="demoFeature('recommendation')">
+                        <span class="feature-icon">🤖</span>
+                        <div class="feature-title">智能推荐引擎</div>
+                        <div class="feature-description">
+                            基于用户行为和商品特征的个性化推荐系统，支持内容推荐、协同过滤和混合推荐算法。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                    
+                    <div class="feature-card" onclick="demoFeature('user')">
+                        <span class="feature-icon">👥</span>
+                        <div class="feature-title">用户管理系统</div>
+                        <div class="feature-description">
+                            完整的会员体系，包括等级管理、积分系统、地址管理、人脸数据管理等高级功能。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                    
+                    <div class="feature-card" onclick="demoFeature('inventory')">
+                        <span class="feature-icon">📦</span>
+                        <div class="feature-title">库存管理系统</div>
+                        <div class="feature-description">
+                            智能库存管理，支持商品CRUD、库存预警、批量操作、供应商管理、数据分析等功能。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                    
+                    <div class="feature-card" onclick="demoFeature('payment')">
+                        <span class="feature-icon">💳</span>
+                        <div class="feature-title">增强支付系统</div>
+                        <div class="feature-description">
+                            多模态支付解决方案，支持人脸支付、扫码支付、银行卡支付，含风险控制和安全验证。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                    
+                    <div class="feature-card" onclick="demoFeature('dashboard')">
+                        <span class="feature-icon">📊</span>
+                        <div class="feature-title">实时监控系统</div>
+                        <div class="feature-description">
+                            全方位数据监控面板，实时监控销售、库存、用户、系统性能等关键指标。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                    
+                    <div class="feature-card" onclick="demoFeature('mobile')">
+                        <span class="feature-icon">📱</span>
+                        <div class="feature-title">移动响应式设计</div>
+                        <div class="feature-description">
+                            完美适配移动设备，优化触控体验，支持暗黑模式、减少动画等无障碍功能。
+                        </div>
+                        <span class="feature-status status-active">✅ 已激活</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 系统状态监控 -->
+            <div class="demo-section">
+                <h2>系统运行状态</h2>
+                <p>实时监控系统的各项指标，确保稳定运行：</p>
+                
+                <div class="system-status">
+                    <div class="status-item">
+                        <span class="status-value" id="cpu-usage">23%</span>
+                        <div class="status-label">CPU使用率</div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-value" id="memory-usage">68%</span>
+                        <div class="status-label">内存使用率</div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-value" id="active-users">15</span>
+                        <div class="status-label">活跃用户</div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-value" id="today-orders">23</span>
+                        <div class="status-label">今日订单</div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-value" id="inventory-value">¥15,847</span>
+                        <div class="status-label">库存价值</div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-value" id="success-rate">97.8%</span>
+                        <div class="status-label">支付成功率</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 快速操作 -->
+            <div class="demo-actions">
+                <h3 style="margin-bottom: 1rem; color: #1f2937;">快速体验</h3>
+                <a href="/" class="demo-btn">
+                    <i class="fas fa-home"></i> 返回首页
+                </a>
+                <a href="/commodity_list" class="demo-btn secondary">
+                    <i class="fas fa-shopping-bag"></i> 浏览商品
+                </a>
+                <a href="/member_center" class="demo-btn tertiary">
+                    <i class="fas fa-user"></i> 会员中心
+                </a>
+                <button onclick="startDemo()" class="demo-btn">
+                    <i class="fas fa-play"></i> 开始演示
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 功能演示
+        function demoFeature(feature) {
+            const features = {
+                'recommendation': '智能推荐引擎已激活！系统正在分析您的偏好...',
+                'user': '用户管理系统已加载！会员等级和积分功能可用。',
+                'inventory': '库存管理系统已启动！实时库存监控中...',
+                'payment': '增强支付系统已就绪！支持多种支付方式。',
+                'dashboard': '实时监控系统已连接！数据正在同步...',
+                'mobile': '移动响应式设计已优化！完美适配您的设备。'
+            };
+            
+            alert(features[feature] || '功能演示进行中...');
+        }
+        
+        // 开始完整演示
+        function startDemo() {
+            const steps = [
+                '正在初始化智能推荐引擎...',
+                '正在加载用户管理系统...',
+                '正在连接库存管理系统...',
+                '正在启动支付系统...',
+                '正在同步监控数据...',
+                '演示准备完成！欢迎体验SmartStore！'
+            ];
+            
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    console.log(steps[currentStep]);
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    alert('🎉 SmartStore 无人商店系统演示已准备就绪！\n\n您现在可以：\n• 浏览智能推荐的商品\n• 体验多种支付方式\n• 查看实时数据监控\n• 管理个人会员账户\n\n点击确定开始您的智能购物之旅！');
+                    window.location.href = '/';
+                }
+            }, 800);
+        }
+        
+        // 实时更新系统状态
+        function updateSystemStatus() {
+            const metrics = {
+                'cpu-usage': Math.floor(Math.random() * 30) + 10 + '%',
+                'memory-usage': Math.floor(Math.random() * 20) + 60 + '%',
+                'active-users': Math.floor(Math.random() * 20) + 10,
+                'today-orders': Math.floor(Math.random() * 30) + 15,
+                'inventory-value': '¥' + (Math.floor(Math.random() * 5000) + 12000).toLocaleString(),
+                'success-rate': (Math.random() * 5 + 95).toFixed(1) + '%'
+            };
+            
+            Object.entries(metrics).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+        }
+        
+        // 启动实时更新
+        setInterval(updateSystemStatus, 3000);
+        updateSystemStatus(); // 立即执行一次
+        
+        // 页面加载完成后的欢迎消息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                console.log('🎉 SmartStore 高级功能演示页面已加载完成！');
+                console.log('💡 提示：点击功能卡片可以查看详细演示');
+                console.log('📱 提示：系统已针对移动设备进行优化');
+            }, 1000);
+        });
+        
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.location.href = '/';
+            } else if (e.key === 'Enter' && e.ctrlKey) {
+                startDemo();
+            }
+        });
+    </script>
+</body>
+</html>

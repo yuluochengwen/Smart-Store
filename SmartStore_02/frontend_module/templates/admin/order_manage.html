@@ -1,0 +1,314 @@
+{% extends "base/base.html" %}
+
+{% block title %}订单管理 - SmartStore{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <section class="page-header bg-gradient-to-r from-green-600 to-blue-600 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">订单管理</h1>
+                    <p class="text-green-100">处理订单，跟踪配送状态</p>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                        <div class="text-sm text-green-100">今日订单</div>
+                        <div class="text-2xl font-bold" id="today-orders">0</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                        <div class="text-sm text-green-100">待处理</div>
+                        <div class="text-2xl font-bold text-yellow-300" id="pending-orders">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Dashboard Stats -->
+    <section class="order-stats py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Sales -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">总销售额</p>
+                            <p class="text-3xl font-bold text-gray-900" id="total-sales">¥0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center">
+                        <span class="text-green-600 text-sm">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="sales-growth">+12.5%</span>
+                        </span>
+                        <span class="text-gray-500 text-sm ml-2">较上月</span>
+                    </div>
+                </div>
+                
+                <!-- Total Orders -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">总订单数</p>
+                            <p class="text-3xl font-bold text-gray-900" id="total-orders">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center">
+                        <span class="text-blue-600 text-sm">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="orders-growth">+8.3%</span>
+                        </span>
+                        <span class="text-gray-500 text-sm ml-2">较上月</span>
+                    </div>
+                </div>
+                
+                <!-- Average Order Value -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">平均订单金额</p>
+                            <p class="text-3xl font-bold text-gray-900" id="avg-order-value">¥0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-coins text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center">
+                        <span class="text-purple-600 text-sm">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="aov-growth">+5.2%</span>
+                        </span>
+                        <span class="text-gray-500 text-sm ml-2">较上月</span>
+                    </div>
+                </div>
+                
+                <!-- Conversion Rate -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600 mb-1">转化率</p>
+                            <p class="text-3xl font-bold text-gray-900" id="conversion-rate">0%</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-percentage text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center">
+                        <span class="text-orange-600 text-sm">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="conversion-growth">+2.1%</span>
+                        </span>
+                        <span class="text-gray-500 text-sm ml-2">较上月</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <section class="order-manage py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Controls -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Search and Filter -->
+                    <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div class="relative flex-1">
+                            <input type="text" id="order-search" placeholder="搜索订单号、用户名或手机号..."
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <select id="status-filter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">所有状态</option>
+                            <option value="pending">待支付</option>
+                            <option value="paid">已支付</option>
+                            <option value="processing">处理中</option>
+                            <option value="shipped">已发货</option>
+                            <option value="delivered">已送达</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                        <select id="date-filter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="today">今天</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                            <option value="all">全部时间</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center space-x-3">
+                        <button id="export-orders" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>导出订单
+                        </button>
+                        <button id="batch-process" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-cogs mr-2"></i>批量处理
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Table -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <!-- Table Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">订单列表</h3>
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="select-all" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-600">全选</span>
+                            </label>
+                            <span class="text-sm text-gray-600">每页显示:</span>
+                            <select id="orders-per-page" class="border border-gray-300 rounded px-2 py-1 text-sm">
+                                <option value="20">20条</option>
+                                <option value="50">50条</option>
+                                <option value="100">100条</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Table Content -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                                    <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500">
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单信息</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">客户信息</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Table rows will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="bg-gray-50 px-6 py-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            显示第 <span id="orders-page-start">1</span> - <span id="orders-page-end">20</span> 条，共 <span id="total-orders-count">0</span> 条记录
+                        </div>
+                        <div id="orders-pagination-controls" class="flex items-center space-x-2">
+                            <!-- Pagination buttons will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">订单详情</h3>
+                <button id="close-order-detail" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="order-detail-content" class="space-y-6">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Status Update Modal -->
+    <div id="status-update-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">更新订单状态</h3>
+                <p class="text-gray-600">选择新的订单状态</p>
+            </div>
+            
+            <form id="status-update-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">订单状态</label>
+                    <select id="new-order-status" required class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">选择状态</option>
+                        <option value="paid">已支付</option>
+                        <option value="processing">处理中</option>
+                        <option value="shipped">已发货</option>
+                        <option value="delivered">已送达</option>
+                        <option value="cancelled">已取消</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="status-note" class="block text-sm font-medium text-gray-700 mb-2">备注 (可选)</label>
+                    <textarea id="status-note" name="note" rows="3" placeholder="请输入状态更新说明..."
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancel-status-update" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                        取消
+                    </button>
+                    <button type="submit" id="confirm-status-update" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        确认更新
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Analytics Dashboard -->
+    <section class="analytics-section py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">销售数据分析</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Sales Chart -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-6">销售额趋势</h3>
+                    <div id="sales-chart" style="height: 300px;"></div>
+                </div>
+                
+                <!-- Order Status Chart -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-6">订单状态分布</h3>
+                    <div id="order-status-chart" style="height: 300px;"></div>
+                </div>
+                
+                <!-- Top Products -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-6">热销商品 TOP 5</h3>
+                    <div id="top-products" class="space-y-4">
+                        <!-- Top products will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Recent Activities -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-6">最近活动</h3>
+                    <div id="recent-activities" class="space-y-4">
+                        <!-- Recent activities will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
