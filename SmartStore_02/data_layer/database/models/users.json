@@ -1,0 +1,13 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "email": "12345@qq.com",
+    "passwordHash": "scrypt:32768:8:1$wevA4tEUdPKCP17o$e7b0bab44926837ee46246addc9d37c67a9e5394f1a5be4a1fadb1ab095ffebaa1109cfc118e09d2726c9e14e7d02d8268952ff69a474fcbf1e0e89aa3eaeda7",
+    "phone": "",
+    "avatar": "https://via.placeholder.com/100x100/f59e0b/ffffff?text=新用户",
+    "points": 100,
+    "level": "铜牌会员",
+    "membershipLevel": "bronze"
+  }
+]
