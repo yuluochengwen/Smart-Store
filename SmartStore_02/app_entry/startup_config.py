@@ -1,5 +1,6 @@
 """
 应用启动配置
+系统自检
 Startup configuration for SmartStore
 """
 import sys

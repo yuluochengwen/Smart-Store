@@ -7,6 +7,8 @@ $(document).ready(function() {
     // 摄像头相关变量
     let videoStream = null;
     let isDetecting = false;
+    let detectionIntervalId = null;  // 保存定时器ID
+    let isDetectionPaused = false;   // 检测是否暂停
     
     // 初始化
     init();
@@ -99,7 +101,12 @@ $(document).ready(function() {
         
         // 人脸检测和识别（每2秒一次，避免过度请求后端）
         let isDetecting_api = false;
-        setInterval(function() {
+        detectionIntervalId = setInterval(function() {
+            // 如果检测被暂停，跳过本次检测
+            if (isDetectionPaused) {
+                return;
+            }
+            
             if (video.readyState === video.HAVE_ENOUGH_DATA && !isDetecting_api) {
                 isDetecting_api = true;
                 detectAndRecognizeFace(video, canvas, ctx, function() {
@@ -107,6 +114,18 @@ $(document).ready(function() {
                 });
             }
         }, 2000);
+    }
+    
+    // 暂停人脸检测
+    function pauseDetection() {
+        isDetectionPaused = true;
+        console.log('✋ 人脸检测已暂停');
+    }
+    
+    // 恢复人脸检测
+    function resumeDetection() {
+        isDetectionPaused = false;
+        console.log('▶️ 人脸检测已恢复');
     }
     
     // 检测并识别人脸
@@ -341,6 +360,44 @@ $(document).ready(function() {
         $('#checkout-btn').click(function() {
             checkout();
         });
+        
+        // 注册按钮
+        $('#register-btn').click(function() {
+            openRegistrationModal();
+        });
+        
+        // 关闭模态框
+        $('.close').click(function() {
+            closeRegistrationModal();
+        });
+        
+        // 点击模态框外部关闭
+        $('#registration-modal').click(function(e) {
+            if (e.target.id === 'registration-modal') {
+                closeRegistrationModal();
+            }
+        });
+        
+        // 拍摄人脸按钮
+        $('#capture-face-btn').click(function() {
+            captureFacePhoto();
+        });
+        
+        // 重新拍摄按钮
+        $('#recapture-face-btn').click(function() {
+            recaptureFace();
+        });
+        
+        // 返回上一步
+        $('#back-to-face-btn').click(function() {
+            showStep('face');
+        });
+        
+        // 提交注册表单
+        $('#registration-form').submit(function(e) {
+            e.preventDefault();
+            submitRegistration();
+        });
     }
     
     // 健康检查
@@ -443,5 +500,252 @@ $(document).ready(function() {
     function checkout() {
         alert('请使用人脸或二维码进行支付');
         // 这里可以跳转到支付页面
+    }
+    
+    // ========== 注册相关功能 ==========
+    
+    let registerVideoStream = null;
+    let capturedFaceEncoding = null;
+    let capturedFaceImage = null;
+    
+    // 打开注册模态框
+    function openRegistrationModal() {
+        // 暂停主页面的人脸识别
+        pauseDetection();
+        console.log('📝 进入注册模式，主页面检测已暂停');
+        
+        $('#registration-modal').fadeIn();
+        showStep('face');
+        startRegisterCamera();
+    }
+    
+    // 关闭注册模态框
+    function closeRegistrationModal() {
+        // 恢复主页面的人脸识别
+        resumeDetection();
+        console.log('✅ 退出注册模式，主页面检测已恢复');
+        
+        $('#registration-modal').fadeOut();
+        stopRegisterCamera();
+        resetRegistrationForm();
+    }
+    
+    // 显示指定步骤
+    function showStep(step) {
+        $('.step').removeClass('active');
+        if (step === 'face') {
+            $('#step-face').addClass('active');
+        } else if (step === 'info') {
+            $('#step-info').addClass('active');
+        }
+    }
+    
+    // 启动注册摄像头
+    function startRegisterCamera() {
+        const video = document.getElementById('register-video');
+        
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user'
+            } 
+        })
+        .then(function(stream) {
+            registerVideoStream = stream;
+            video.srcObject = stream;
+            video.play();
+            console.log('注册摄像头已启动');
+        })
+        .catch(function(err) {
+            console.error('无法访问摄像头:', err);
+            alert('❌ 无法访问摄像头，请检查权限设置');
+        });
+    }
+    
+    // 停止注册摄像头
+    function stopRegisterCamera() {
+        if (registerVideoStream) {
+            registerVideoStream.getTracks().forEach(track => track.stop());
+            registerVideoStream = null;
+        }
+    }
+    
+    // 拍摄人脸照片
+    function captureFacePhoto() {
+        const video = document.getElementById('register-video');
+        const canvas = document.getElementById('register-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+            alert('❌ 摄像头尚未准备好，请稍后再试');
+            return;
+        }
+        
+        // 设置 canvas 尺寸
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // 绘制当前帧
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 转换为 base64
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        capturedFaceImage = imageData;
+        
+        console.log('正在提取人脸特征（注册模式，不进行比对）...');
+        $('#capture-face-btn').prop('disabled', true).text('⏳ 提取中...');
+        
+        // 发送到后端仅提取人脸特征（添加 skip_recognition 参数）
+        $.ajax({
+            url: API_BASE + '/customer/detect',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ 
+                image: imageData.split(',')[1],
+                skip_recognition: true  // 跳过数据库比对
+            }),
+            success: function(response) {
+                console.log('人脸特征提取响应:', response);
+                $('#capture-face-btn').prop('disabled', false).text('📷 拍摄人脸');
+                
+                if (response.success && response.data.face_count > 0) {
+                    // 注册模式：不检查是否已注册，直接提取特征
+                    if (response.data.faces && response.data.faces.length > 0) {
+                        capturedFaceEncoding = response.data.faces[0].encoding;
+                        showCapturedFace(imageData);
+                        console.log('✅ 人脸特征提取成功（未进行数据库比对）');
+                    } else {
+                        alert('❌ 未能提取人脸特征，请重新拍摄');
+                    }
+                } else {
+                    alert('❌ 未检测到人脸，请确保正对摄像头并光线充足');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('人脸特征提取失败:', error);
+                $('#capture-face-btn').prop('disabled', false).text('📷 拍摄人脸');
+                alert('❌ 人脸特征提取失败: ' + error);
+            }
+        });
+    }
+    
+    // 显示拍摄的人脸
+    function showCapturedFace(imageData) {
+        const video = document.getElementById('register-video');
+        const preview = document.getElementById('face-preview');
+        
+        // 隐藏视频，显示预览
+        $(video).hide();
+        $(preview).html(`<img src="${imageData}" alt="拍摄的人脸" />`).show();
+        
+        // 切换按钮
+        $('#capture-face-btn').hide();
+        $('#recapture-face-btn').show();
+        
+        // 自动进入下一步
+        setTimeout(function() {
+            showStep('info');
+            stopRegisterCamera();
+        }, 1000);
+    }
+    
+    // 重新拍摄
+    function recaptureFace() {
+        const video = document.getElementById('register-video');
+        const preview = document.getElementById('face-preview');
+        
+        // 显示视频，隐藏预览
+        $(video).show();
+        $(preview).hide().html('');
+        
+        // 切换按钮
+        $('#capture-face-btn').show();
+        $('#recapture-face-btn').hide();
+        
+        // 清空数据
+        capturedFaceEncoding = null;
+        capturedFaceImage = null;
+        
+        // 重启摄像头
+        if (!registerVideoStream) {
+            startRegisterCamera();
+        }
+    }
+    
+    // 提交注册
+    function submitRegistration() {
+        const name = $('#reg-name').val().trim();
+        const phone = $('#reg-phone').val().trim();
+        const email = $('#reg-email').val().trim();
+        
+        if (!name) {
+            alert('❌ 请输入姓名');
+            return;
+        }
+        
+        if (!capturedFaceEncoding) {
+            alert('❌ 请先录入人脸');
+            showStep('face');
+            return;
+        }
+        
+        console.log('提交注册:', { name, phone, email });
+        $('#submit-register-btn').prop('disabled', true).text('⏳ 注册中...');
+        
+        // 发送注册请求
+        $.ajax({
+            url: API_BASE + '/customer/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                name: name,
+                phone: phone || null,
+                email: email || null,
+                face_encoding: capturedFaceEncoding
+            }),
+            success: function(response) {
+                console.log('注册响应:', response);
+                $('#submit-register-btn').prop('disabled', false).text('✓ 完成注册');
+                
+                if (response.success) {
+                    alert('✅ 注册成功！欢迎来到 SmartStore！');
+                    closeRegistrationModal();
+                    
+                    // 显示欢迎消息
+                    if (response.data && response.data.user) {
+                        showWelcomeMessage(response.data.user);
+                    }
+                } else {
+                    alert('❌ 注册失败: ' + (response.message || '未知错误'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('注册失败:', error);
+                $('#submit-register-btn').prop('disabled', false).text('✓ 完成注册');
+                
+                let errorMsg = '注册失败';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg += ': ' + xhr.responseJSON.message;
+                }
+                alert('❌ ' + errorMsg);
+            }
+        });
+    }
+    
+    // 重置注册表单
+    function resetRegistrationForm() {
+        $('#registration-form')[0].reset();
+        $('#reg-name').val('');
+        $('#reg-phone').val('');
+        $('#reg-email').val('');
+        capturedFaceEncoding = null;
+        capturedFaceImage = null;
+        
+        // 重置人脸预览
+        $('#register-video').show();
+        $('#face-preview').hide().html('');
+        $('#capture-face-btn').show();
+        $('#recapture-face-btn').hide();
     }
 });

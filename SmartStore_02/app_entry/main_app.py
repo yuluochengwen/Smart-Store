@@ -14,7 +14,7 @@ from flask_cors import CORS
 from common.config.app_config import AppConfig
 from common.utils.logger import get_logger
 from common.exceptions.error_handler import register_error_handlers, success_response, error_response
-from data_layer.database.db_connector import db_connector
+from data_layer.database.db_connector import get_db_connector
 from app_entry.startup_config import init_app
 
 logger = get_logger(__name__)
@@ -75,6 +75,7 @@ def customer_detect():
     try:
         data = request.get_json()
         image_base64 = data.get('image')
+        skip_recognition = data.get('skip_recognition', False)  # 是否跳过数据库比对
         
         if not image_base64:
             return error_response('未提供图像数据', 400)
@@ -123,7 +124,19 @@ def customer_detect():
                     enforce_detection=False
                 )[0]['embedding']
                 
-                # 在数据库中查找匹配的用户
+                # 如果是注册模式（skip_recognition=True），直接返回特征，不进行数据库比对
+                if skip_recognition:
+                    logger.info("🔧 注册模式：跳过数据库比对，直接返回人脸特征")
+                    return success_response({
+                        'face_count': face_count,
+                        'recognized': False,
+                        'faces': [{
+                            'encoding': face_embedding,
+                            'confidence': main_face.get('confidence', 0)
+                        }]
+                    }, '人脸特征提取成功')
+                
+                # 正常识别模式：在数据库中查找匹配的用户
                 from data_layer.database.db_connector import get_db_connector
                 from data_layer.database.models import User
                 import json
@@ -332,7 +345,8 @@ def get_commodities():
         from data_layer.database.models import Commodity
         search = request.args.get('search', '')
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             query = session.query(Commodity)
             if search:
                 query = query.filter(Commodity.name.like(f'%{search}%'))
@@ -355,7 +369,8 @@ def admin_stats():
         from sqlalchemy import func
         from datetime import date
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             # 今日销售额
             today_sales = session.query(func.sum(Transaction.total_amount)).filter(
                 func.date(Transaction.created_at) == date.today()
@@ -389,7 +404,8 @@ def admin_recent_transactions():
     try:
         from data_layer.database.models import Transaction, User
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             transactions = session.query(Transaction).join(User).order_by(
                 Transaction.created_at.desc()
             ).limit(5).all()
@@ -415,7 +431,8 @@ def admin_users():
         search = request.args.get('search', '')
         role = request.args.get('role', '')
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             query = session.query(User)
             
             if search:
@@ -446,7 +463,8 @@ def admin_transactions():
         start_date = request.args.get('start_date', '')
         end_date = request.args.get('end_date', '')
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             query = session.query(Transaction).join(User)
             
             if start_date:
@@ -480,7 +498,8 @@ def admin_inventory():
     try:
         from data_layer.database.models import Commodity
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             commodities = session.query(Commodity).all()
             
             total_value = sum(c.price * c.stock for c in commodities)
@@ -513,7 +532,8 @@ def admin_add_commodity():
         from data_layer.database.models import Commodity
         data = request.get_json()
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             commodity = Commodity(
                 name=data['name'],
                 category=data.get('category'),
@@ -537,7 +557,8 @@ def admin_get_commodity(commodity_id):
     try:
         from data_layer.database.models import Commodity
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             commodity = session.query(Commodity).filter(Commodity.id == commodity_id).first()
             if not commodity:
                 return error_response('商品不存在', 404)
@@ -555,7 +576,8 @@ def admin_update_commodity(commodity_id):
         from data_layer.database.models import Commodity
         data = request.get_json()
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             commodity = session.query(Commodity).filter(Commodity.id == commodity_id).first()
             if not commodity:
                 return error_response('商品不存在', 404)
@@ -579,7 +601,8 @@ def admin_delete_commodity(commodity_id):
     try:
         from data_layer.database.models import Commodity
         
-        with db_connector.session_scope() as session:
+        db_conn = get_db_connector()
+        with db_conn.session_scope() as session:
             commodity = session.query(Commodity).filter(Commodity.id == commodity_id).first()
             if not commodity:
                 return error_response('商品不存在', 404)
