@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartStore - 智能无人商店</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏪 SmartStore 智能无人商店</h1>
+            <p class="subtitle">体验未来购物新方式</p>
+        </header>
+
+        <main>
+            <!-- 顾客检测区域 -->
+            <section class="card">
+                <h2>👤 顾客检测</h2>
+                <div class="video-container">
+                    <video id="customer-video" autoplay></video>
+                    <canvas id="customer-canvas"></canvas>
+                </div>
+                <div class="info">
+                    <p>
+                        检测到的顾客数: <span id="customer-count">0</span>
+                        <button id="register-btn" class="btn btn-register">👤 立即注册</button>
+                    </p>
+                </div>
+            </section>
+            
+            <!-- 注册模态框 -->
+            <div id="registration-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>👤 新用户注册</h2>
+                    <div class="registration-steps">
+                        <!-- 步骤1: 录入人脸 -->
+                        <div id="step-face" class="step active">
+                            <h3>步骤 1: 录入人脸</h3>
+                            <div class="face-capture-container">
+                                <video id="register-video" autoplay></video>
+                                <canvas id="register-canvas" style="display: none;"></canvas>
+                                <div id="face-preview" class="face-preview" style="display: none;"></div>
+                            </div>
+                            <p class="hint">请正对摄像头，确保光线充足</p>
+                            <button id="capture-face-btn" class="btn btn-primary">📷 拍摄人脸</button>
+                            <button id="recapture-face-btn" class="btn btn-secondary" style="display: none;">🔄 重新拍摄</button>
+                        </div>
+                        
+                        <!-- 步骤2: 填写信息 -->
+                        <div id="step-info" class="step" style="display: none;">
+                            <h3>步骤 2: 填写信息</h3>
+                            <form id="registration-form">
+                                <div class="form-group">
+                                    <label for="reg-name">姓名 *</label>
+                                    <input type="text" id="reg-name" name="name" required placeholder="请输入您的姓名">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-phone">手机号</label>
+                                    <input type="tel" id="reg-phone" name="phone" placeholder="请输入手机号（可选）">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email">邮箱</label>
+                                    <input type="email" id="reg-email" name="email" placeholder="请输入邮箱（可选）">
+                                </div>
+                                <div class="button-group">
+                                    <button type="button" id="back-to-face-btn" class="btn btn-secondary">← 上一步</button>
+                                    <button type="submit" id="submit-register-btn" class="btn btn-primary">✓ 完成注册</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 购物篮区域 -->
+            <section class="card">
+                <h2>🛒 购物篮</h2>
+                <div id="basket-items" class="basket-list">
+                    <!-- 购物篮项目将动态插入这里 -->
+                </div>
+                <div class="basket-total">
+                    <h3>总计: ¥<span id="basket-total">0.00</span></h3>
+                    <button id="checkout-btn" class="btn btn-primary">结算</button>
+                </div>
+            </section>
+
+            <!-- 语音交互区域 -->
+            <section class="card">
+                <h2>🎤 语音助手</h2>
+                <div class="voice-input">
+                    <button id="voice-btn" class="btn btn-voice">点击说话</button>
+                    <input type="text" id="question-input" placeholder="或输入您的问题..." />
+                    <button id="ask-btn" class="btn btn-secondary">提问</button>
+                </div>
+                <div id="voice-response" class="response-box">
+                    <p>您好！我是SmartStore智能助手，请问有什么可以帮您的？</p>
+                </div>
+            </section>
+
+            <!-- 商品推荐区域 -->
+            <section class="card">
+                <h2>⭐ 商品推荐</h2>
+                <div id="recommendations" class="product-grid">
+                    <!-- 推荐商品将动态插入这里 -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 SmartStore. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

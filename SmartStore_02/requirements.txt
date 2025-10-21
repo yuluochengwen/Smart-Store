@@ -1,8 +1,169 @@
-# SmartStore项目依赖库
-flask==2.3.3
-opencv-python==4.9.0.80
-pymysql==1.1.1
-torch==2.1.2  # 用于机器学习和文生图
-transformers==4.35.2  # LLM和语音相关
- SpeechRecognition==3.10.0  # 语音识别
-gTTS==2.4.0  # 文字转语音
+# SmartStore 项目依赖库 - Python 3.10 + CUDA 11.8
+# 使用 DeepFace + TensorFlow GPU 进行人脸识别
+
+# ==================== GPU 深度学习框架 ====================
+# 重要：先安装 PyTorch GPU 版本，使用以下命令：
+# pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+
+# TensorFlow GPU (CUDA 11.8) - 与 NumPy 兼容版本
+tensorflow==2.15.0
+# 注意：tensorflow 2.15.0 要求 numpy>=1.23.5,<2.0.0
+
+# NumPy - 关键：必须使用兼容版本
+numpy==1.24.3  # TensorFlow 2.15 兼容（1.23.5-1.26.4），PyTorch 2.1 兼容
+
+# ==================== Web 框架 ====================
+flask==3.0.0
+flask-cors==4.0.0
+werkzeug==3.0.1
+
+# ==================== 计算机视觉 ====================
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+Pillow==10.1.0
+
+# ==================== YOLO 目标检测 ====================
+ultralytics==8.0.196  # 兼容 torch 2.1.0
+
+# ==================== 人脸识别 - DeepFace ====================
+deepface==0.0.79
+tf-keras==2.15.0  # TensorFlow 2.15 配套
+# DeepFace 会自动下载以下预训练模型（首次运行）：
+# - Facenet (92MB)
+# - VGG-Face (500MB)
+# - ArcFace (130MB)
+
+# ==================== 数据库 ====================
+pymysql==1.1.0
+sqlalchemy==2.0.23
+cryptography==41.0.7
+
+# ==================== 语音识别与合成 ====================
+SpeechRecognition==3.10.0
+pydub==0.25.1
+gTTS==2.4.0
+edge-tts==6.1.9
+soundfile==0.12.1
+sounddevice==0.4.6
+
+# ==================== LLM 与自然语言处理 ====================
+transformers==4.35.2  # 兼容 torch 2.1.0
+accelerate==0.25.0
+tiktoken==0.5.2
+openai==1.3.7
+jieba==0.42.1
+# # LangChain 生态系统 - 经过验证的兼容版本
+# langchain
+# langchain-community
+# langchain-openai
+
+# ==================== 文生图（可选） ====================
+diffusers==0.24.0
+safetensors==0.4.1
+
+# ==================== 图像处理 ====================
+scikit-image==0.22.0
+matplotlib==3.8.2
+scipy==1.11.4
+
+# ==================== 数据处理与分析 ====================
+pandas==2.1.3
+scikit-learn==1.3.2
+
+# ==================== API 与网络请求 ====================
+requests==2.31.0
+aiohttp==3.9.1
+urllib3==2.1.0
+
+# ==================== 工具库 ====================
+python-dotenv==1.0.0
+pyyaml==6.0.1
+tqdm==4.66.1
+
+# ==================== 异步支持 ====================
+nest-asyncio==1.5.8
+
+# ==================== 配置管理 ====================
+pydantic==2.5.2
+pydantic-settings==2.1.0
+
+# ==================== 其他依赖 ====================
+typing-extensions==4.9.0
+protobuf==4.23.4  # TensorFlow 兼容版本
+
+# ==================== 依赖冲突解决说明 ====================
+#
+# 1. NumPy 版本冲突：
+#    - TensorFlow 2.15.0 要求: numpy>=1.23.5,<2.0.0
+#    - PyTorch 2.1.0 要求: numpy>=1.21.0
+#    - OpenCV 4.8.1 要求: numpy>=1.21.2
+#    - 解决方案: 使用 numpy==1.24.3（所有库的交集）
+#
+# 2. Protobuf 版本冲突：
+#    - TensorFlow 2.15.0 要求: protobuf>=3.20.3,<5.0.0
+#    - 解决方案: 使用 protobuf==4.23.4
+#
+# 3. PyTorch vs TensorFlow：
+#    - 两者可以共存，但建议分别使用
+#    - PyTorch 用于 YOLO 和其他 CV 任务
+#    - TensorFlow 专用于 DeepFace 人脸识别
+#
+# 4. CUDA 版本要求：
+#    - PyTorch 2.1.0 + CUDA 11.8
+#    - TensorFlow 2.15.0 + CUDA 11.8 (通过 tensorflow[and-cuda])
+#    - 确保系统已安装 CUDA 11.8 和 cuDNN 8.6+
+#
+# 5. 已移除的冲突库：
+#    - face-recognition (需要 dlib，难以安装)
+#    - dlib (需要 C++ 编译器)
+#
+# ==================== 安装顺序（重要！）====================
+#
+# 步骤 1: 安装 CUDA 和 cuDNN
+#   - CUDA 11.8: https://developer.nvidia.com/cuda-11-8-0-download-archive
+#   - cuDNN 8.6+: https://developer.nvidia.com/cudnn
+#
+# 步骤 2: 创建虚拟环境
+#   python -m venv venv
+#   venv\Scripts\activate
+#
+# 步骤 3: 升级 pip
+#   python -m pip install --upgrade pip
+#
+# 步骤 4: 安装 PyTorch (CUDA 11.8)
+#   pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+#
+# 步骤 5: 安装其他依赖
+#   pip install -r requirements.txt
+#
+# 步骤 6: 验证安装
+#   python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
+#   python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}, GPU: {tf.config.list_physical_devices(\"GPU\")}')"
+#   python -c "from deepface import DeepFace; print('DeepFace OK')"
+#
+# ==================== 国内镜像加速 ====================
+#
+# 清华镜像：
+#   pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+#
+# 阿里镜像：
+#   pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+#
+# ==================== 常见问题 ====================
+#
+# Q1: numpy 版本冲突？
+# A: 严格使用 numpy==1.24.3，不要升级
+#
+# Q2: TensorFlow 找不到 CUDA？
+# A: 检查环境变量 PATH 是否包含 CUDA 路径
+#
+# Q3: PyTorch 找不到 CUDA？
+# A: 确认安装的是 cu118 版本，不是 CPU 版本
+#
+# Q4: DeepFace 下载模型失败？
+# A: 手动下载模型到 ~/.deepface/weights/
+#
+# Q5: 内存不足？
+# A: 降低 batch_size，或使用更小的模型（如 OpenFace）
+#
+# ================================================

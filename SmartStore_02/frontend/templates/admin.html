@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartStore - 管理后台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🏪 SmartStore</h2>
+                <p>智能管理系统</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard" class="nav-item active" data-section="dashboard">
+                        <span class="icon">📊</span> 仪表盘
+                    </a></li>
+                    <li><a href="#commodities" class="nav-item" data-section="commodities">
+                        <span class="icon">📦</span> 商品管理
+                    </a></li>
+                    <li><a href="#users" class="nav-item" data-section="users">
+                        <span class="icon">👥</span> 用户管理
+                    </a></li>
+                    <li><a href="#transactions" class="nav-item" data-section="transactions">
+                        <span class="icon">💳</span> 交易记录
+                    </a></li>
+                    <li><a href="#inventory" class="nav-item" data-section="inventory">
+                        <span class="icon">📈</span> 库存管理
+                    </a></li>
+                    <li><a href="#settings" class="nav-item" data-section="settings">
+                        <span class="icon">⚙️</span> 系统设置
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 id="page-title">仪表盘</h1>
+                <div class="user-info">
+                    <span class="admin-name">👤 管理员</span>
+                    <button class="btn-logout" onclick="window.location.href='/'">返回主页</button>
+                </div>
+            </header>
+
+            <!-- 仪表盘 -->
+            <section id="dashboard" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>今日销售额</h3>
+                            <p class="stat-value" id="today-sales">¥0.00</p>
+                            <span class="stat-change">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <h3>今日订单</h3>
+                            <p class="stat-value" id="today-orders">0</p>
+                            <span class="stat-change">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3>注册用户</h3>
+                            <p class="stat-value" id="total-users">0</p>
+                            <span class="stat-change">累计</span>
+                        </div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-info">
+                            <h3>商品总数</h3>
+                            <p class="stat-value" id="total-commodities">0</p>
+                            <span class="stat-change">在售</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>最近交易</h3>
+                        <div id="recent-transactions">
+                            <p class="no-data">暂无数据</p>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>热销商品 TOP 5</h3>
+                        <div id="top-commodities">
+                            <p class="no-data">暂无数据</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 商品管理 -->
+            <section id="commodities" class="content-section">
+                <div class="section-header">
+                    <h2>商品管理</h2>
+                    <div class="toolbar">
+                        <input type="text" id="search-commodity" class="search-input" placeholder="🔍 搜索商品名称..." />
+                        <button class="btn btn-primary" id="add-commodity-btn">➕ 添加商品</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名称</th>
+                                <th>类别</th>
+                                <th>价格</th>
+                                <th>库存</th>
+                                <th>位置</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commodity-list">
+                            <tr class="loading-row">
+                                <td colspan="8" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 用户管理 -->
+            <section id="users" class="content-section">
+                <div class="section-header">
+                    <h2>用户管理</h2>
+                    <div class="toolbar">
+                        <input type="text" id="search-user" class="search-input" placeholder="🔍 搜索用户..." />
+                        <select id="filter-role" class="filter-select">
+                            <option value="">全部角色</option>
+                            <option value="MEMBER">会员</option>
+                            <option value="VIP">VIP会员</option>
+                            <option value="GUEST">游客</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>手机号</th>
+                                <th>邮箱</th>
+                                <th>角色</th>
+                                <th>余额</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list">
+                            <tr class="loading-row">
+                                <td colspan="8" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 交易记录 -->
+            <section id="transactions" class="content-section">
+                <div class="section-header">
+                    <h2>交易记录</h2>
+                    <div class="toolbar">
+                        <input type="date" id="start-date" class="date-input" />
+                        <span class="date-separator">至</span>
+                        <input type="date" id="end-date" class="date-input" />
+                        <button class="btn btn-secondary" id="filter-transactions-btn">筛选</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>交易ID</th>
+                                <th>用户</th>
+                                <th>金额</th>
+                                <th>支付方式</th>
+                                <th>状态</th>
+                                <th>交易时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list">
+                            <tr class="loading-row">
+                                <td colspan="7" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 库存管理 -->
+            <section id="inventory" class="content-section">
+                <div class="section-header">
+                    <h2>库存管理</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-warning" id="low-stock-alert">⚠️ 低库存预警</button>
+                        <button class="btn btn-secondary" id="refresh-inventory">🔄 刷新</button>
+                    </div>
+                </div>
+                <div class="inventory-grid">
+                    <div class="inventory-card">
+                        <h4>总库存价值</h4>
+                        <p class="inventory-value" id="total-inventory-value">¥0.00</p>
+                    </div>
+                    <div class="inventory-card">
+                        <h4>低库存商品</h4>
+                        <p class="inventory-value" id="low-stock-count">0</p>
+                    </div>
+                    <div class="inventory-card">
+                        <h4>缺货商品</h4>
+                        <p class="inventory-value" id="out-stock-count">0</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>商品名称</th>
+                                <th>当前库存</th>
+                                <th>安全库存</th>
+                                <th>单价</th>
+                                <th>库存价值</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-list">
+                            <tr class="loading-row">
+                                <td colspan="7" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 系统设置 -->
+            <section id="settings" class="content-section">
+                <div class="section-header">
+                    <h2>系统设置</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <h3>📷 摄像头设置</h3>
+                        <div class="setting-item">
+                            <label>人脸识别阈值</label>
+                            <input type="number" id="face-threshold" value="10.0" step="0.1" />
+                        </div>
+                        <div class="setting-item">
+                            <label>检测帧率 (FPS)</label>
+                            <input type="number" id="detection-fps" value="30" />
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3>💰 支付设置</h3>
+                        <div class="setting-item">
+                            <label>启用人脸支付</label>
+                            <input type="checkbox" id="enable-face-payment" checked />
+                        </div>
+                        <div class="setting-item">
+                            <label>启用二维码支付</label>
+                            <input type="checkbox" id="enable-qr-payment" checked />
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3>📦 库存设置</h3>
+                        <div class="setting-item">
+                            <label>低库存预警线</label>
+                            <input type="number" id="low-stock-threshold" value="10" />
+                        </div>
+                        <div class="setting-item">
+                            <label>自动补货提醒</label>
+                            <input type="checkbox" id="auto-restock-alert" checked />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary save-settings-btn">💾 保存设置</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 添加商品模态框 -->
+    <div id="add-commodity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加商品</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>商品名称 *</label>
+                    <input type="text" id="commodity-name" class="form-input" placeholder="请输入商品名称" required />
+                </div>
+                <div class="form-group">
+                    <label>商品类别 *</label>
+                    <input type="text" id="commodity-category" class="form-input" placeholder="如：饮料、零食" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>价格 (元) *</label>
+                        <input type="number" id="commodity-price" class="form-input" placeholder="0.00" step="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label>库存数量 *</label>
+                        <input type="number" id="commodity-stock" class="form-input" placeholder="0" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>货架位置</label>
+                    <input type="text" id="commodity-location" class="form-input" placeholder="如：A1-01" />
+                </div>
+                <div class="form-group">
+                    <label>商品描述</label>
+                    <textarea id="commodity-description" class="form-textarea" placeholder="商品描述（可选）" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary cancel-btn">取消</button>
+                <button class="btn btn-primary" id="confirm-add-commodity">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑商品模态框 -->
+    <div id="edit-commodity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑商品</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-commodity-id" />
+                <div class="form-group">
+                    <label>商品名称 *</label>
+                    <input type="text" id="edit-commodity-name" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label>商品类别 *</label>
+                    <input type="text" id="edit-commodity-category" class="form-input" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>价格 (元) *</label>
+                        <input type="number" id="edit-commodity-price" class="form-input" step="0.01" required />
+                    </div>
+                    <div class="form-group">
+                        <label>库存数量 *</label>
+                        <input type="number" id="edit-commodity-stock" class="form-input" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>货架位置</label>
+                    <input type="text" id="edit-commodity-location" class="form-input" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary cancel-btn">取消</button>
+                <button class="btn btn-primary" id="confirm-edit-commodity">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
