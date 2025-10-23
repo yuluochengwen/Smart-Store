@@ -15,6 +15,6 @@ call E:\Anaconda\Scripts\activate.bat
 call conda activate smart_store
 
 echo [3/3] 启动应用...
-E:\Anaconda\envs\smart_store\python.exe run.py
+D:\ANconda\envs\smart_store\python.exe run.py
 
 pause

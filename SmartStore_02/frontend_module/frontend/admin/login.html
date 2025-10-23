@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 管理登录</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.net.min.js"></script>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-shopping-cart"></i>
+                <h1>智能购物系统</h1>
+                <p>管理后台</p>
+            </div>
+        </div>
+        
+        <div class="login-form-container">
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">
+                    <i class="fas fa-sign-in-alt"></i>
+                    登录
+                </button>
+                <button class="tab-btn" onclick="switchTab('register')">
+                    <i class="fas fa-user-plus"></i>
+                    注册
+                </button>
+            </div>
+            
+            <!-- 登录表单 -->
+            <div id="login-form" class="form-content active">
+                <h2>欢迎回来</h2>
+                <p class="subtitle">请输入您的登录信息</p>
+                
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="login-username">
+                            <i class="fas fa-user"></i>
+                            用户名
+                        </label>
+                        <input type="text" id="login-username" name="username" required 
+                               placeholder="请输入用户名">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="login-password">
+                            <i class="fas fa-lock"></i>
+                            密码
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="login-password" name="password" required 
+                                   placeholder="请输入密码">
+                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember">
+                            <span>记住我</span>
+                        </label>
+                        <a href="#" class="forgot-password" onclick="showForgotPassword()">
+                            忘记密码？
+                        </a>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        登录
+                    </button>
+                </form>
+                
+                <div class="social-login">
+                    <p>其他登录方式</p>
+                    <div class="social-buttons">
+                        <button type="button" class="social-btn wechat" onclick="socialLogin('wechat')">
+                            <i class="fab fa-weixin"></i>
+                        </button>
+                        <button type="button" class="social-btn qq" onclick="socialLogin('qq')">
+                            <i class="fab fa-qq"></i>
+                        </button>
+                        <button type="button" class="social-btn github" onclick="socialLogin('github')">
+                            <i class="fab fa-github"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 注册表单 -->
+            <div id="register-form" class="form-content">
+                <h2>创建账户</h2>
+                <p class="subtitle">请填写注册信息</p>
+                
+                <form onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label for="register-username">
+                            <i class="fas fa-user"></i>
+                            用户名
+                        </label>
+                        <input type="text" id="register-username" name="username" required 
+                               placeholder="请输入用户名">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="register-email">
+                            <i class="fas fa-envelope"></i>
+                            邮箱
+                        </label>
+                        <input type="email" id="register-email" name="email" required 
+                               placeholder="请输入邮箱地址">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="register-password">
+                            <i class="fas fa-lock"></i>
+                            密码
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="register-password" name="password" required 
+                                   placeholder="请输入密码">
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="confirm-password">
+                            <i class="fas fa-lock"></i>
+                            确认密码
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="confirm-password" name="confirmPassword" required 
+                                   placeholder="请再次输入密码">
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="agree-terms">
+                            <input type="checkbox" name="agreeTerms" required>
+                            <span>我同意 <a href="#" onclick="showTerms()">服务条款</a></span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-user-plus"></i>
+                        注册
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="login-footer">
+            <p>&copy; 2024 智能购物系统. 保留所有权利.</p>
+        </div>
+    </div>
+    
+    <!-- 忘记密码模态框 -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>重置密码</h3>
+                <span class="close" onclick="closeForgotPasswordModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>请输入您的邮箱地址，我们将发送密码重置链接给您。</p>
+                <div class="input-group">
+                    <label for="reset-email">
+                        <i class="fas fa-envelope"></i>
+                        邮箱地址
+                    </label>
+                    <input type="email" id="reset-email" required 
+                           placeholder="请输入注册时的邮箱地址">
+                </div>
+                <button type="button" class="submit-btn" onclick="sendResetEmail()">
+                    <i class="fas fa-paper-plane"></i>
+                    发送重置邮件
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 服务条款模态框 -->
+    <div id="terms-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>服务条款</h3>
+                <span class="close" onclick="closeTermsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="terms-content">
+                    <h4>欢迎使用智能购物系统</h4>
+                    <p>本系统提供智能商品识别、购物清单管理、数据分析等功能。</p>
+                    
+                    <h4>用户权利与义务</h4>
+                    <ul>
+                        <li>用户有权使用系统提供的所有功能</li>
+                        <li>用户应保证提供的信息真实有效</li>
+                        <li>用户不得利用系统进行违法活动</li>
+                        <li>用户应妥善保管账户信息</li>
+                    </ul>
+                    
+                    <h4>隐私保护</h4>
+                    <p>我们承诺保护用户的个人隐私，不会泄露用户的个人信息。</p>
+                    
+                    <h4>免责声明</h4>
+                    <p>因不可抗力或第三方原因造成的损失，本系统不承担责任。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        // 初始化Vanta.js背景
+        VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x667eea,
+            backgroundColor: 0x764ba2,
+            points: 8.00,
+            maxDistance: 25.00,
+            spacing: 18.00
+        });
+    </script>
+</body>
+</html>

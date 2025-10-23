@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 库存管理</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="traffic.html" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="inventory.html" class="menu-item active">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="users.html" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="orders.html" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="products.html" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="dashboard.html">首页</a>
+                        <span>/</span>
+                        <span>库存管理</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索商品...">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-boxes"></i> 库存管理</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshInventory()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新库存
+                        </button>
+                        <button class="action-btn primary" onclick="addProduct()">
+                            <i class="fas fa-plus"></i>
+                            添加商品
+                        </button>
+                        <button class="action-btn success" onclick="exportInventory()">
+                            <i class="fas fa-download"></i>
+                            导出库存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 库存统计 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="total-products">567</h3>
+                                <p>商品总数</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="in-stock-count">423</h3>
+                                <p>库存充足</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="low-stock-count">89</h3>
+                                <p>库存偏低</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="out-of-stock-count">55</h3>
+                                <p>缺货商品</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 库存概览图表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            库存状态分布
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeChartType(this.value)">
+                                <option value="pie">饼图</option>
+                                <option value="bar">柱状图</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="inventory-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 库存列表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            库存列表
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" id="inventory-filter" onchange="filterInventory(this.value)">
+                                <option value="all">全部商品</option>
+                                <option value="in-stock">库存充足</option>
+                                <option value="low-stock">库存偏低</option>
+                                <option value="out-of-stock">缺货</option>
+                            </select>
+                            <input type="text" class="filter-input" placeholder="搜索商品..." oninput="searchInventory(this.value)">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>商品ID</th>
+                                    <th>商品信息</th>
+                                    <th>价格</th>
+                                    <th>库存数量</th>
+                                    <th>状态</th>
+                                    <th>更新时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 库存预警 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            库存预警
+                        </h2>
+                        <div class="card-actions">
+                            <button class="action-btn secondary" onclick="markAllAsRead()">
+                                <i class="fas fa-check-double"></i>
+                                全部标记已读
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-list">
+                        <div class="alert-item warning">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">库存偏低警告</div>
+                                <div class="alert-message">商品 "苹果" 库存仅剩 5 件，建议及时补货</div>
+                                <div class="alert-time">2分钟前</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="action-btn primary" onclick="handleAlert('restock', '苹果')">
+                                    立即补货
+                                </button>
+                                <button class="action-btn secondary" onclick="dismissAlert(this)">
+                                    忽略
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-item danger">
+                            <div class="alert-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">商品缺货</div>
+                                <div class="alert-message">商品 "牛奶" 已完全缺货，需要立即补货</div>
+                                <div class="alert-time">5分钟前</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="action-btn danger" onclick="handleAlert('urgent', '牛奶')">
+                                    紧急补货
+                                </button>
+                                <button class="action-btn secondary" onclick="dismissAlert(this)">
+                                    忽略
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-item info">
+                            <div class="alert-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">库存更新</div>
+                                <div class="alert-message">商品 "香蕉" 库存已更新为 50 件</div>
+                                <div class="alert-time">1小时前</div>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="action-btn secondary" onclick="dismissAlert(this)">
+                                    知道了
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 编辑库存模态框 -->
+    <div id="edit-inventory-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑库存</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-inventory-form">
+                    <div class="input-group">
+                        <label for="product-name">商品名称</label>
+                        <input type="text" id="product-name" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="current-stock">当前库存</label>
+                        <input type="number" id="current-stock" readonly>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-stock">新库存数量</label>
+                        <input type="number" id="new-stock" required min="0">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="stock-reason">修改原因</label>
+                        <select id="stock-reason" required>
+                            <option value="">请选择</option>
+                            <option value="purchase">采购入库</option>
+                            <option value="sale">销售出库</option>
+                            <option value="adjustment">库存调整</option>
+                            <option value="return">退货入库</option>
+                            <option value="damage">报损出库</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="stock-note">备注</label>
+                        <textarea id="stock-note" rows="3" placeholder="请输入备注信息..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditModal()">取消</button>
+                <button class="btn-primary" onclick="saveInventoryChanges()">
+                    <i class="fas fa-save"></i>
+                    保存更改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <style>
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .alert-item.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-item.danger {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-item.info {
+            background: rgba(23, 162, 184, 0.1);
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .alert-item.warning .alert-icon {
+            background: #ffc107;
+        }
+        
+        .alert-item.danger .alert-icon {
+            background: #dc3545;
+        }
+        
+        .alert-item.info .alert-icon {
+            background: #17a2b8;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+        
+        .alert-message {
+            color: #6c757d;
+            margin-bottom: 0.3rem;
+        }
+        
+        .alert-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .alert-actions .action-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .input-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+            resize: vertical;
+        }
+        
+        .input-group textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</body>
+</html>

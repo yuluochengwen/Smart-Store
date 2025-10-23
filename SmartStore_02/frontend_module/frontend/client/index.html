@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 客户端</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+</head>
+<body>
+    <div class="client-container">
+        <!-- 顶部导航栏 -->
+        <header class="client-header">
+            <div class="header-left">
+                <i class="fas fa-shopping-cart logo-icon"></i>
+                <h1>智能购物系统</h1>
+            </div>
+            <div class="header-right">
+                <div class="cart-summary">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span id="cart-count">0</span> 件商品
+                    <span class="divider">|</span>
+                    ￥<span id="cart-total">0.00</span>
+                </div>
+                <button class="checkout-btn" onclick="proceedToCheckout()">
+                    <i class="fas fa-credit-card"></i>
+                    去结算
+                </button>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="client-main">
+            <!-- 左侧摄像头区域 -->
+            <section class="camera-section">
+                <div class="camera-header">
+                    <h2><i class="fas fa-camera"></i> 实时商品识别</h2>
+                    <div class="camera-controls">
+                        <button class="control-btn" onclick="startCamera()">
+                            <i class="fas fa-play"></i> 开始识别
+                        </button>
+                        <button class="control-btn" onclick="stopCamera()">
+                            <i class="fas fa-stop"></i> 停止识别
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="camera-container">
+                    <video id="camera-feed" class="camera-video" autoplay muted>
+                        <div class="camera-placeholder">
+                            <i class="fas fa-video-slash"></i>
+                            <p>摄像头未连接</p>
+                            <button class="connect-camera-btn" onclick="startCamera()">
+                                连接摄像头
+                            </button>
+                        </div>
+                    </video>
+                    
+                    <!-- 商品识别框 -->
+                    <div id="detection-overlay" class="detection-overlay">
+                        <!-- 动态生成的识别框 -->
+                    </div>
+                </div>
+
+                <!-- 识别状态栏 -->
+                <div class="detection-status">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="status-dot"></div>
+                        <span id="status-text">等待开始识别</span>
+                    </div>
+                    <div class="detection-stats">
+                        <span>今日识别: <strong id="today-detections">0</strong></span>
+                        <span>识别成功率: <strong id="success-rate">0%</strong></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 右侧购物清单区域 -->
+            <section class="shopping-section">
+                <div class="shopping-header">
+                    <h2><i class="fas fa-list-check"></i> 购物清单</h2>
+                    <div class="shopping-controls">
+                        <button class="control-btn" onclick="clearCart()">
+                            <i class="fas fa-trash"></i> 清空
+                        </button>
+                        <button class="control-btn" onclick="saveCart()">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI助手区域 -->
+                <div class="ai-assistant">
+                    <div class="ai-header">
+                        <i class="fas fa-robot"></i>
+                        <span>AI购物助手</span>
+                        <div class="ai-status online">
+                            <div class="ai-status-dot"></div>
+                            <span>在线</span>
+                        </div>
+                    </div>
+                    <div class="ai-chat" id="ai-chat">
+                        <div class="ai-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <p>您好！我是AI购物助手，可以为您提供商品推荐和购物建议。请告诉我您需要什么帮助？</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-input">
+                        <input type="text" id="ai-input" placeholder="输入您的问题..." />
+                        <button onclick="sendAIMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 购物清单 -->
+                <div class="shopping-list" id="shopping-list">
+                    <div class="empty-cart">
+                        <i class="fas fa-shopping-basket"></i>
+                        <h3>购物清单为空</h3>
+                        <p>将商品放入摄像头区域即可自动识别添加</p>
+                    </div>
+                </div>
+
+                <!-- 推荐商品 -->
+                <div class="recommended-products">
+                    <h3><i class="fas fa-star"></i> 推荐商品</h3>
+                    <div class="recommended-list" id="recommended-list">
+                        <!-- 动态生成的推荐商品 -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 结算模态框 -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>订单结算</h2>
+                <span class="close" onclick="closeCheckoutModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary">
+                    <h3>订单详情</h3>
+                    <div id="order-items">
+                        <!-- 动态生成订单商品 -->
+                    </div>
+                    <div class="order-total">
+                        <span>总计:</span>
+                        <strong>￥<span id="final-total">0.00</span></strong>
+                    </div>
+                </div>
+                
+                <div class="payment-methods">
+                    <h3>支付方式</h3>
+                    <div class="payment-options">
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="wechat" checked>
+                            <i class="fab fa-weixin"></i>
+                            <span>微信支付</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="alipay">
+                            <i class="fab fa-alipay"></i>
+                            <span>支付宝</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="card">
+                            <i class="fas fa-credit-card"></i>
+                            <span>银行卡</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCheckoutModal()">取消</button>
+                <button class="btn-primary" onclick="confirmPayment()">
+                    <i class="fas fa-lock"></i>
+                    确认支付
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

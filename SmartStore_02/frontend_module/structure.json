@@ -1,0 +1,51 @@
+{
+    "project_structure": {
+        "backend/": {
+            "app.py": "Flask应用主文件",
+            "routes/": {
+                "__init__.py": "路由模块初始化",
+                "auth.py": "认证相关路由",
+                "client.py": "客户端相关路由", 
+                "admin.py": "管理端相关路由",
+                "api.py": "API接口路由"
+            },
+            "models/": {
+                "__init__.py": "模型模块初始化",
+                "user.py": "用户模型",
+                "product.py": "商品模型",
+                "order.py": "订单模型",
+                "inventory.py": "库存模型"
+            },
+            "utils/": {
+                "__init__.py": "工具模块初始化",
+                "database.py": "数据库连接工具",
+                "camera.py": "摄像头处理工具",
+                "ai_detection.py": "AI识别工具"
+            },
+            "config.py": "配置文件",
+            "requirements.txt": "依赖包列表"
+        },
+        "frontend/": {
+            "client/": {
+                "index.html": "客户端主页面",
+                "styles.css": "客户端样式文件",
+                "script.js": "客户端脚本文件"
+            },
+            "admin/": {
+                "login.html": "管理端登录页面",
+                "dashboard.html": "仪表盘页面",
+                "traffic.html": "人流量监控页面",
+                "inventory.html": "库存管理页面",
+                "users.html": "用户管理页面",
+                "orders.html": "交易记录页面",
+                "products.html": "商品管理页面",
+                "styles.css": "管理端样式文件",
+                "script.js": "管理端脚本文件"
+            },
+            "assets/": {
+                "images/": "图片资源文件夹",
+                "icons/": "图标资源文件夹"
+            }
+        }
+    }
+}

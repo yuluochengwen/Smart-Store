@@ -3,87 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartStore - 智能无人商店</title>
-    <!-- 移除 meta 跳转，统一用 JS 跳转到 /home -->
-    <!-- 引入 Font Awesome CDN 以显示图标 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papm6Q+1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Qw1Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>智能购物系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
-            text-align: center;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .loading {
-            max-width: 400px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 800px;
             padding: 2rem;
         }
+
         .logo {
-            width: 80px;
-            height: 80px;
-            background: white;
-            border-radius: 1rem;
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ffd700;
+        }
+
+        .feature h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature p {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-stack {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tech-stack h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .tech-icons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tech-icon {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-            color: #1e3a8a;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
         }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 1rem auto;
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .message {
-            margin-top: 1rem;
-            opacity: 0.8;
-        }
-        .manual-link {
-            margin-top: 2rem;
-        }
-        .manual-link a {
-            color: #f97316;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .manual-link a:hover {
-            text-decoration: underline;
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="loading">
+    <div class="container">
         <div class="logo">
-            <i class="fas fa-store"></i>
+            <i class="fas fa-shopping-cart"></i>
         </div>
-        <h1>SmartStore</h1>
-        <p>智能无人商店系统</p>
-        <div class="spinner"></div>
-        <p class="message">正在加载，请稍候...</p>
-        <div class="manual-link">
-            <p>如果没有自动跳转，请<a href="/home">点击这里</a></p>
+        
+        <h1>智能购物系统</h1>
+        <p class="subtitle">基于AI视觉识别的智能购物体验</p>
+        
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-eye"></i>
+                <h3>AI视觉识别</h3>
+                <p>通过摄像头自动识别商品，无需手动扫码，提升购物效率</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-robot"></i>
+                <h3>智能助手</h3>
+                <p>AI购物助手提供商品推荐、价格查询、优惠信息等服务</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-chart-line"></i>
+                <h3>数据分析</h3>
+                <p>实时人流量监控、销售数据分析、库存预警管理</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-mobile-alt"></i>
+                <h3>响应式设计</h3>
+                <p>支持PC、平板、手机等多设备访问，体验一致</p>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <a href="frontend/client/index.html" class="btn">
+                <i class="fas fa-shopping-bag"></i>
+                客户端体验
+            </a>
+            <a href="frontend/admin/login.html" class="btn">
+                <i class="fas fa-cog"></i>
+                管理后台
+            </a>
+            <a href="demo.py" class="btn" onclick="alert('请运行 ./demo.py 查看演示')">
+                <i class="fas fa-play"></i>
+                功能演示
+            </a>
+        </div>
+        
+        <div class="tech-stack">
+            <h3>技术栈</h3>
+            <div class="tech-icons">
+                <div class="tech-icon">
+                    <i class="fab fa-python"></i>
+                    <span>Python</span>
+                </div>
+                <div class="tech-icon">
+                    <i class="fas fa-flask"></i>
+                    <span>Flask</span>
+                </div>
+                <div class="tech-icon">
+                    <i class="fas fa-database"></i>
+                    <span>SQLite</span>
+                </div>
+                <div class="tech-icon">
+                    <i class="fab fa-js-square"></i>
+                    <span>JavaScript</span>
+                </div>
+                <div class="tech-icon">
+                    <i class="fas fa-eye"></i>
+                    <span>OpenCV</span>
+                </div>
+                <div class="tech-icon">
+                    <i class="fas fa-brain"></i>
+                    <span>AI模型</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+            <p>🚀 快速开始: 运行 <code style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 5px;">./start.sh</code> 启动系统</p>
+            <p>🧪 系统测试: 运行 <code style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 5px;">./test_system.py</code> 检查系统状态</p>
         </div>
     </div>
-    
-    <script>
-        // 3 秒后跳转到 /home
-        setTimeout(function() {
-            window.location.href = '/home';
-        }, 3000);
-    </script>
 </body>
 </html>

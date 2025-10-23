@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 商品管理</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="traffic.html" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="inventory.html" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="users.html" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="orders.html" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="products.html" class="menu-item active">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="dashboard.html">首页</a>
+                        <span>/</span>
+                        <span>商品管理</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索商品..." oninput="searchProducts(this.value)">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-shopping-bag"></i> 商品管理</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshProducts()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新商品
+                        </button>
+                        <button class="action-btn primary" onclick="addProduct()">
+                            <i class="fas fa-plus"></i>
+                            添加商品
+                        </button>
+                        <button class="action-btn success" onclick="exportProducts()">
+                            <i class="fas fa-download"></i>
+                            导出商品
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 商品统计 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="total-products">567</h3>
+                                <p>商品总数</p>
+                                <span class="stat-change positive">+15.8%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="active-products">534</h3>
+                                <p>上架商品</p>
+                                <span class="stat-change positive">+12.3%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="total-categories">12</h3>
+                                <p>商品分类</p>
+                                <span class="stat-change positive">+1</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="avg-price">¥8.56</h3>
+                                <p>平均价格</p>
+                                <span class="stat-change positive">+3.2%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-yen-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 商品分类图表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            商品分类分布
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeCategoryView(this.value)">
+                                <option value="pie">饼图</option>
+                                <option value="bar">柱状图</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="category-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 商品列表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            商品列表
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" id="product-category-filter" onchange="filterProductsByCategory(this.value)">
+                                <option value="all">全部分类</option>
+                                <option value="水果">水果</option>
+                                <option value="蔬菜">蔬菜</option>
+                                <option value="饮品">饮品</option>
+                                <option value="食品">食品</option>
+                                <option value="零食">零食</option>
+                            </select>
+                            <select class="filter-select" id="product-status-filter" onchange="filterProductsByStatus(this.value)">
+                                <option value="all">全部状态</option>
+                                <option value="active">上架</option>
+                                <option value="inactive">下架</option>
+                            </select>
+                            <input type="text" class="filter-input" placeholder="搜索商品..." oninput="searchProducts(this.value)">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">商品信息</div>
+                            <div class="table-actions">
+                                <button class="action-btn secondary" onclick="batchAction('activate')">
+                                    <i class="fas fa-check"></i>
+                                    批量上架
+                                </button>
+                                <button class="action-btn warning" onclick="batchAction('deactivate')">
+                                    <i class="fas fa-ban"></i>
+                                    批量下架
+                                </button>
+                                <button class="action-btn danger" onclick="batchAction('delete')">
+                                    <i class="fas fa-trash"></i>
+                                    批量删除
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="select-all-products" onchange="toggleSelectAllProducts(this)">
+                                    </th>
+                                    <th>商品ID</th>
+                                    <th>商品信息</th>
+                                    <th>价格</th>
+                                    <th>库存</th>
+                                    <th>分类</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table-body">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 热销商品排行 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-fire"></i>
+                            热销商品排行
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeRankingPeriod(this.value)">
+                                <option value="7">近7天</option>
+                                <option value="30">近30天</option>
+                                <option value="90">近90天</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-list">
+                        <div class="ranking-item">
+                            <div class="ranking-number">1</div>
+                            <div class="product-info">
+                                <div class="product-avatar">🍎</div>
+                                <div class="product-details">
+                                    <div class="product-name">苹果</div>
+                                    <div class="product-category">水果</div>
+                                </div>
+                            </div>
+                            <div class="sales-info">
+                                <div class="sales-count">120件</div>
+                                <div class="sales-amount">¥718.80</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-item">
+                            <div class="ranking-number">2</div>
+                            <div class="product-info">
+                                <div class="product-avatar">🍌</div>
+                                <div class="product-details">
+                                    <div class="product-name">香蕉</div>
+                                    <div class="product-category">水果</div>
+                                </div>
+                            </div>
+                            <div class="sales-info">
+                                <div class="sales-count">98件</div>
+                                <div class="sales-amount">¥391.02</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-item">
+                            <div class="ranking-number">3</div>
+                            <div class="product-info">
+                                <div class="product-avatar">🥛</div>
+                                <div class="product-details">
+                                    <div class="product-name">牛奶</div>
+                                    <div class="product-category">饮品</div>
+                                </div>
+                            </div>
+                            <div class="sales-info">
+                                <div class="sales-count">85件</div>
+                                <div class="sales-amount">¥1,104.15</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-item">
+                            <div class="ranking-number">4</div>
+                            <div class="product-info">
+                                <div class="product-avatar">🍞</div>
+                                <div class="product-details">
+                                    <div class="product-name">面包</div>
+                                    <div class="product-category">食品</div>
+                                </div>
+                            </div>
+                            <div class="sales-info">
+                                <div class="sales-count">76件</div>
+                                <div class="sales-amount">¥683.24</div>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-item">
+                            <div class="ranking-number">5</div>
+                            <div class="product-info">
+                                <div class="product-avatar">🥚</div>
+                                <div class="product-details">
+                                    <div class="product-name">鸡蛋</div>
+                                    <div class="product-category">食品</div>
+                                </div>
+                            </div>
+                            <div class="sales-info">
+                                <div class="sales-count">65件</div>
+                                <div class="sales-amount">¥1,039.35</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加商品模态框 -->
+    <div id="add-product-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>添加商品</h3>
+                <span class="close" onclick="closeAddProductModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="add-product-form">
+                    <div class="form-grid">
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="new-product-name">商品名称</label>
+                                <input type="text" id="new-product-name" required placeholder="请输入商品名称">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-price">商品价格</label>
+                                <input type="number" id="new-product-price" required min="0" step="0.01" placeholder="请输入商品价格">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-category">商品分类</label>
+                                <select id="new-product-category" required>
+                                    <option value="">请选择分类</option>
+                                    <option value="水果">水果</option>
+                                    <option value="蔬菜">蔬菜</option>
+                                    <option value="饮品">饮品</option>
+                                    <option value="食品">食品</option>
+                                    <option value="零食">零食</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-stock">初始库存</label>
+                                <input type="number" id="new-product-stock" required min="0" placeholder="请输入初始库存">
+                            </div>
+                        </div>
+                        
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="new-product-icon">商品图标</label>
+                                <input type="text" id="new-product-icon" placeholder="请输入emoji图标，如 🍎">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-unit">计量单位</label>
+                                <input type="text" id="new-product-unit" placeholder="如：个、斤、瓶">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-barcode">条形码</label>
+                                <input type="text" id="new-product-barcode" placeholder="请输入商品条形码">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="new-product-status">商品状态</label>
+                                <select id="new-product-status" required>
+                                    <option value="active">上架</option>
+                                    <option value="inactive">下架</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label for="new-product-description">商品描述</label>
+                        <textarea id="new-product-description" rows="4" placeholder="请输入商品详细描述..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddProductModal()">取消</button>
+                <button class="btn-primary" onclick="saveNewProduct()">
+                    <i class="fas fa-save"></i>
+                    添加商品
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑商品模态框 -->
+    <div id="edit-product-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>编辑商品</h3>
+                <span class="close" onclick="closeEditProductModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-product-form">
+                    <input type="hidden" id="edit-product-id">
+                    
+                    <div class="form-grid">
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="edit-product-name">商品名称</label>
+                                <input type="text" id="edit-product-name" required>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-price">商品价格</label>
+                                <input type="number" id="edit-product-price" required min="0" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-category">商品分类</label>
+                                <select id="edit-product-category" required>
+                                    <option value="水果">水果</option>
+                                    <option value="蔬菜">蔬菜</option>
+                                    <option value="饮品">饮品</option>
+                                    <option value="食品">食品</option>
+                                    <option value="零食">零食</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-stock">库存数量</label>
+                                <input type="number" id="edit-product-stock" required min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="edit-product-icon">商品图标</label>
+                                <input type="text" id="edit-product-icon">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-unit">计量单位</label>
+                                <input type="text" id="edit-product-unit">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-barcode">条形码</label>
+                                <input type="text" id="edit-product-barcode">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="edit-product-status">商品状态</label>
+                                <select id="edit-product-status" required>
+                                    <option value="active">上架</option>
+                                    <option value="inactive">下架</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group full-width">
+                        <label for="edit-product-description">商品描述</label>
+                        <textarea id="edit-product-description" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditProductModal()">取消</button>
+                <button class="btn-primary" onclick="saveProductChanges()">
+                    <i class="fas fa-save"></i>
+                    保存更改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <style>
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .form-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .modal-content.large {
+            max-width: 800px;
+        }
+        
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .ranking-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ranking-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .ranking-item:nth-child(1) .ranking-number {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+        }
+        
+        .ranking-item:nth-child(2) .ranking-number {
+            background: linear-gradient(45deg, #c0c0c0, #e8e8e8);
+            color: #333;
+        }
+        
+        .ranking-item:nth-child(3) .ranking-number {
+            background: linear-gradient(45deg, #cd7f32, #daa520);
+            color: white;
+        }
+        
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+        
+        .product-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .product-details {
+            flex: 1;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+        
+        .product-category {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .sales-info {
+            text-align: right;
+        }
+        
+        .sales-count {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+        
+        .sales-amount {
+            font-size: 0.9rem;
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</body>
+</html>

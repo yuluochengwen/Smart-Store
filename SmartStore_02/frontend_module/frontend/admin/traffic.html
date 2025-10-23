@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 人流量监控</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="traffic.html" class="menu-item active">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="inventory.html" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="users.html" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="orders.html" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="products.html" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="dashboard.html">首页</a>
+                        <span>/</span>
+                        <span>人流量监控</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索...">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-users"></i> 人流量监控</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshTraffic()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新数据
+                        </button>
+                        <button class="action-btn primary" onclick="exportTrafficData()">
+                            <i class="fas fa-download"></i>
+                            导出数据
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 实时监控面板 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-video"></i>
+                            实时监控
+                        </h2>
+                        <div class="card-actions">
+                            <div class="camera-status online">
+                                <div class="status-dot"></div>
+                                <span>摄像头在线</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-container">
+                        <div class="camera-view">
+                            <div class="camera-placeholder">
+                                <i class="fas fa-video"></i>
+                                <h3>摄像头画面</h3>
+                                <p>实时人流量监控</p>
+                            </div>
+                            <div class="camera-overlay">
+                                <div class="detection-info">
+                                    <div class="detection-item">
+                                        <span class="label">检测区域:</span>
+                                        <span class="value">入口区域</span>
+                                    </div>
+                                    <div class="detection-item">
+                                        <span class="label">检测算法:</span>
+                                        <span class="value">YOLOv8</span>
+                                    </div>
+                                    <div class="detection-item">
+                                        <span class="label">置信度:</span>
+                                        <span class="value">94.7%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="monitor-stats">
+                            <div class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-info">
+                                        <h3 id="entered-count">156</h3>
+                                        <p>进入人数</p>
+                                    </div>
+                                    <div class="stat-icon">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-info">
+                                        <h3 id="left-count">134</h3>
+                                        <p>离开人数</p>
+                                    </div>
+                                    <div class="stat-icon">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-content">
+                                    <div class="stat-info">
+                                        <h3 id="current-count">22</h3>
+                                        <p>当前在场</p>
+                                    </div>
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计数据 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="today-traffic">287</h3>
+                                <p>今日人流量</p>
+                                <span class="stat-change positive">+15.3%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="week-traffic">1,847</h3>
+                                <p>本周人流量</p>
+                                <span class="stat-change positive">+8.7%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="month-traffic">12,560</h3>
+                                <p>本月人流量</p>
+                                <span class="stat-change positive">+12.1%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="peak-hour">14:00-15:00</h3>
+                                <p>高峰时段</p>
+                                <span class="stat-change">42人/小时</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 人流量趋势图 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-area"></i>
+                            人流量趋势
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeTrendPeriod(this.value)">
+                                <option value="today">今日</option>
+                                <option value="week">本周</option>
+                                <option value="month">本月</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container large" id="traffic-trend-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 时段分析 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-clock"></i>
+                            时段分析
+                        </h2>
+                    </div>
+                    <div class="time-analysis">
+                        <div class="time-slots">
+                            <div class="time-slot">
+                                <div class="time-label">早晨 (6:00-12:00)</div>
+                                <div class="time-bar-container">
+                                    <div class="time-bar" style="width: 25%"></div>
+                                </div>
+                                <div class="time-count">72人 (25%)</div>
+                            </div>
+                            
+                            <div class="time-slot">
+                                <div class="time-label">下午 (12:00-18:00)</div>
+                                <div class="time-bar-container">
+                                    <div class="time-bar" style="width: 45%"></div>
+                                </div>
+                                <div class="time-count">129人 (45%)</div>
+                            </div>
+                            
+                            <div class="time-slot">
+                                <div class="time-label">晚上 (18:00-22:00)</div>
+                                <div class="time-bar-container">
+                                    <div class="time-bar" style="width: 30%"></div>
+                                </div>
+                                <div class="time-count">86人 (30%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 历史记录 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-history"></i>
+                            历史记录
+                        </h2>
+                        <div class="card-actions">
+                            <input type="date" class="filter-input" onchange="filterHistory(this.value)">
+                            <button class="action-btn secondary" onclick="clearHistory()">
+                                <i class="fas fa-trash"></i>
+                                清空记录
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>事件类型</th>
+                                    <th>人数</th>
+                                    <th>置信度</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr>
+                                    <td>2024-01-20 14:23:15</td>
+                                    <td><span class="status-badge active">进入</span></td>
+                                    <td>1</td>
+                                    <td>96.2%</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn view" onclick="viewRecord('2024-01-20 14:23:15')">
+                                                <i class="fas fa-eye"></i>
+                                                查看
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2024-01-20 14:22:08</td>
+                                    <td><span class="status-badge">离开</span></td>
+                                    <td>1</td>
+                                    <td>94.8%</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn view" onclick="viewRecord('2024-01-20 14:22:08')">
+                                                <i class="fas fa-eye"></i>
+                                                查看
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2024-01-20 14:21:33</td>
+                                    <td><span class="status-badge active">进入</span></td>
+                                    <td>2</td>
+                                    <td>97.1%</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn view" onclick="viewRecord('2024-01-20 14:21:33')">
+                                                <i class="fas fa-eye"></i>
+                                                查看
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <style>
+        .monitor-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .camera-view {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 400px;
+        }
+        
+        .camera-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .camera-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+        
+        .camera-placeholder h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .camera-placeholder p {
+            opacity: 0.8;
+        }
+        
+        .camera-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .detection-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .detection-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .detection-item .label {
+            opacity: 0.8;
+        }
+        
+        .detection-item .value {
+            font-weight: 600;
+        }
+        
+        .monitor-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .monitor-stats .stat-card {
+            margin-bottom: 0;
+        }
+        
+        .monitor-stats .stat-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
+        
+        .time-analysis {
+            padding: 1rem 0;
+        }
+        
+        .time-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .time-slot {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .time-label {
+            min-width: 120px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .time-bar-container {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .time-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+        
+        .time-count {
+            min-width: 100px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .camera-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #28a745;
+        }
+        
+        .camera-status .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+    </style>
+</body>
+</html>

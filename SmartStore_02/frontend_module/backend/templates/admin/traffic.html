@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 人流量监控</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="{{ url_for('admin_traffic') }}" class="menu-item active">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="{{ url_for('admin_inventory') }}" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="{{ url_for('admin_dashboard') }}">首页</a>
+                        <span>/</span>
+                        <span>人流量监控</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索摄像头/区域..." oninput="searchCameras(this.value)">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-users"></i> 人流量监控</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshTraffic()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新数据
+                        </button>
+                        <button class="action-btn success" onclick="exportTrafficReport()">
+                            <i class="fas fa-download"></i>
+                            导出报表
+                        </button>
+                        <button class="action-btn primary" onclick="addCamera()">
+                            <i class="fas fa-video"></i>
+                            添加摄像头
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 人流量统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="today-visitors">1,284</h3>
+                                <p>今日访客</p>
+                                <span class="stat-change positive">+7.1%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="current-in-store">86</h3>
+                                <p>当前在店</p>
+                                <span class="stat-change">实时</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-walking"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="peak-hour">14:00-15:00</h3>
+                                <p>今日高峰期</p>
+                                <span class="stat-change positive">+12.3%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="camera-count">8</h3>
+                                <p>摄像头数量</p>
+                                <span class="stat-change">在线6台</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 人流趋势图 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            人流量趋势（实时）
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeTrafficPeriod(this.value)">
+                                <option value="1">今日</option>
+                                <option value="7">近7天</option>
+                                <option value="30">近30天</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container large" id="traffic-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 热力图和摄像头画面 -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-fire"></i>
+                                店内热力图
+                            </h2>
+                        </div>
+                        <div class="heatmap-container" id="heatmap">
+                            <!-- 热力图由JS渲染 -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-video"></i>
+                                摄像头监控
+                            </h2>
+                        </div>
+                        <div class="camera-grid" id="camera-grid">
+                            <!-- 摄像头画面由JS渲染/占位 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 摄像头列表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            摄像头列表
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" id="camera-status-filter" onchange="filterCameras(this.value)">
+                                <option value="all">全部</option>
+                                <option value="online">在线</option>
+                                <option value="offline">离线</option>
+                            </select>
+                            <input type="text" class="filter-input" placeholder="搜索摄像头..." oninput="searchCameras(this.value)">
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>摄像头ID</th>
+                                    <th>名称</th>
+                                    <th>位置</th>
+                                    <th>状态</th>
+                                    <th>上次在线</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cameras-table-body">
+                                <!-- 数据由JS动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加摄像头模态框 -->
+    <div id="add-camera-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加摄像头</h3>
+                <span class="close" onclick="closeAddCameraModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="add-camera-form">
+                    <div class="input-group">
+                        <label for="camera-name">名称</label>
+                        <input type="text" id="camera-name" required placeholder="请输入摄像头名称">
+                    </div>
+                    <div class="input-group">
+                        <label for="camera-location">位置</label>
+                        <input type="text" id="camera-location" required placeholder="请输入安装位置">
+                    </div>
+                    <div class="input-group">
+                        <label for="camera-url">视频流地址</label>
+                        <input type="text" id="camera-url" placeholder="rtsp:// 或 http://">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddCameraModal()">取消</button>
+                <button class="btn-primary" onclick="saveNewCamera()">
+                    <i class="fas fa-save"></i>
+                    添加摄像头
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='admin/script.js') }}"></script>
+    <style>
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 1200px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        .heatmap-container {
+            height: 320px;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 12px;
+            border: 1px dashed #dee2e6;
+        }
+        .camera-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .camera-item {
+            background: #000;
+            height: 150px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .camera-item .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 仪表盘</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="menu-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="{{ url_for('admin_traffic') }}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="{{ url_for('admin_inventory') }}" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="{{ url_for('admin_dashboard') }}">首页</a>
+                        <span>/</span>
+                        <span>仪表盘</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索...">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-tachometer-alt"></i> 仪表盘</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新数据
+                        </button>
+                        <button class="action-btn primary" onclick="exportReport()">
+                            <i class="fas fa-download"></i>
+                            导出报告
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card sales" id="today-sales">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 class="stat-value">¥12,580.50</h3>
+                                <p>今日销售额</p>
+                                <span class="stat-change positive">+12.5%</span>
+                            </div>
+                            <div class="stat-icon sales">
+                                <i class="fas fa-yen-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card orders" id="today-orders">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 class="stat-value">156</h3>
+                                <p>今日订单</p>
+                                <span class="stat-change positive">+8.3%</span>
+                            </div>
+                            <div class="stat-icon orders">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card users" id="total-users">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 class="stat-value">1,234</h3>
+                                <p>注册用户</p>
+                                <span class="stat-change positive">+5.2%</span>
+                            </div>
+                            <div class="stat-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card products" id="total-products">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 class="stat-value">567</h3>
+                                <p>商品总数</p>
+                                <span class="stat-change positive">+15.8%</span>
+                            </div>
+                            <div class="stat-icon products">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            销售趋势
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeChartPeriod(this.value)">
+                                <option value="14">近14天</option>
+                                <option value="30">近30天</option>
+                                <option value="90">近90天</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container large" id="sales-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 热销商品 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-star"></i>
+                            热销商品 TOP5
+                        </h2>
+                        <div class="card-actions">
+                            <button class="action-btn secondary" onclick="viewAllProducts()">
+                                查看全部
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="top-products-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 实时数据监控 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-broadcast-tower"></i>
+                            实时数据监控
+                        </h2>
+                        <div class="card-actions">
+                            <div class="status-indicator online">
+                                <div class="status-dot"></div>
+                                <span>系统正常</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="real-time-stats">
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">当前在线用户</div>
+                                <div class="stat-value" id="online-users">42</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">今日商品识别</div>
+                                <div class="stat-value" id="today-detections">1,234</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">识别成功率</div>
+                                <div class="stat-value" id="detection-rate">94.7%</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">平均响应时间</div>
+                                <div class="stat-value" id="response-time">0.3s</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速操作 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-bolt"></i>
+                            快速操作
+                        </h2>
+                    </div>
+                    <div class="quick-actions">
+                        <div class="action-grid">
+                            <button class="quick-action-btn" onclick="addProduct()">
+                                <i class="fas fa-plus"></i>
+                                <span>添加商品</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="viewOrders()">
+                                <i class="fas fa-receipt"></i>
+                                <span>查看订单</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="manageUsers()">
+                                <i class="fas fa-users"></i>
+                                <span>用户管理</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="checkInventory()">
+                                <i class="fas fa-boxes"></i>
+                                <span>库存检查</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="viewTraffic()">
+                                <i class="fas fa-walking"></i>
+                                <span>人流量监控</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="systemSettings()">
+                                <i class="fas fa-cog"></i>
+                                <span>系统设置</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='admin/script.js') }}"></script>
+    <style>
+        .real-time-stats {
+            padding: 1rem 0;
+        }
+        
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .quick-actions {
+            padding: 1rem 0;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        }
+        
+        .quick-action-btn i {
+            font-size: 2rem;
+        }
+        
+        .quick-action-btn span {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #28a745;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+    </style>
+</body>
+</html>

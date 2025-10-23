@@ -38,11 +38,11 @@ git clone https://github.com/yuluochengwen/Smart-Store.git
 cd Smart-Store/SmartStore_02
 
 # 创建 Conda 环境（推荐）
-conda create -n smart_store python=3.10
+conda create -n smart_store python=3.10 -y
 conda activate smart_store
 
 # 安装 PyTorch GPU (CUDA 11.8)
-pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu118
 
 # 安装其他依赖
 pip install -r requirements.txt
@@ -56,7 +56,7 @@ copy .env.example .env
 
 ```powershell
 # 自动创建数据库、建表、添加测试数据
-python init_database.py
+python scripts/init_database.py
 ```
 
 ### 4️⃣ 启动应用
@@ -119,7 +119,12 @@ SmartStore_02/
 │   ├── config/            # 配置
 │   ├── utils/             # 工具函数
 │   └── exceptions/        # 异常处理
-├── init_database.py       # 数据库初始化脚本 ⭐
+├── scripts/               # 工具脚本
+│   └── init_database.py   # 数据库初始化脚本 ⭐
+├── tests_and_docs/        # 测试和文档
+│   ├── docs/              # 项目文档
+│   └── tests/             # 测试文件
+├── images/                # 示例图片
 ├── run.py                 # 运行入口
 ├── start.bat              # Windows 启动脚本 ⭐
 ├── requirements.txt       # 依赖清单
@@ -194,7 +199,7 @@ SmartStore_02/
 | `purchase_records` | 购买记录 | id, user_id, commodity_id, quantity |
 | `feedbacks` | 用户反馈 | id, user_id, feedback_type, question, response |
 
-**自动初始化**: 运行 `python init_database.py` 自动创建所有表并添加测试数据
+**自动初始化**: 运行 `python scripts/init_database.py` 自动创建所有表并添加测试数据
 
 ---
 
@@ -427,7 +432,7 @@ python check_users.py
 **A**: 
 1. 检查 MySQL 服务是否启动
 2. 确认 `.env` 文件中的数据库密码正确
-3. 运行初始化脚本：`python init_database.py`
+3. 运行初始化脚本：`python scripts/init_database.py`
 
 ### Q: DeepFace 模型下载慢？
 **A**: DeepFace 首次使用会自动下载模型（约 92MB），请耐心等待或配置代理

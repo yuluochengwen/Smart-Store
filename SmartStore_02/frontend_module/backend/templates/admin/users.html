@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能购物系统 - 用户管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-shopping-cart"></i> <span class="menu-text">智能购物系统</span></h2>
+                <p><span class="menu-text">管理后台</span></p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="menu-text">仪表盘</span>
+                </a>
+                <a href="{{ url_for('admin_traffic') }}" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">人流量监控</span>
+                </a>
+                <a href="{{ url_for('admin_inventory') }}" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    <span class="menu-text">库存管理</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="menu-item active">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="menu-item">
+                    <i class="fas fa-receipt"></i>
+                    <span class="menu-text">交易记录</span>
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="toggle-sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="{{ url_for('admin_dashboard') }}">首页</a>
+                        <span>/</span>
+                        <span>用户管理</span>
+                    </nav>
+                </div>
+                
+                <div class="navbar-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索用户..." oninput="searchUsers(this.value)">
+                    </div>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">A</div>
+                        <div class="user-info">
+                            <div class="user-name">管理员</div>
+                            <div class="user-role">超级管理员</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1><i class="fas fa-user-friends"></i> 用户管理</h1>
+                    </div>
+                    <div class="page-actions">
+                        <button class="action-btn secondary" onclick="refreshUsers()">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新列表
+                        </button>
+                        <button class="action-btn primary" onclick="addUser()">
+                            <i class="fas fa-plus"></i>
+                            添加用户
+                        </button>
+                        <button class="action-btn success" onclick="exportUsers()">
+                            <i class="fas fa-download"></i>
+                            导出用户
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 用户统计 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="total-users">1,234</h3>
+                                <p>总用户数</p>
+                                <span class="stat-change positive">+5.2%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="active-users">1,156</h3>
+                                <p>活跃用户</p>
+                                <span class="stat-change positive">+8.3%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="new-users-today">23</h3>
+                                <p>今日新增</p>
+                                <span class="stat-change positive">+12.1%</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3 id="online-users">42</h3>
+                                <p>当前在线</p>
+                                <span class="stat-change">实时</span>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户活跃度分析 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            用户活跃度分析
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" onchange="changeActivityPeriod(this.value)">
+                                <option value="7">近7天</option>
+                                <option value="30">近30天</option>
+                                <option value="90">近90天</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container large" id="user-activity-chart">
+                        <!-- 图表将通过JavaScript生成 -->
+                    </div>
+                </div>
+
+                <!-- 用户列表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            用户列表
+                        </h2>
+                        <div class="card-actions">
+                            <select class="filter-select" id="user-status-filter" onchange="filterUsers(this.value)">
+                                <option value="all">全部用户</option>
+                                <option value="active">正常用户</option>
+                                <option value="inactive">禁用用户</option>
+                            </select>
+                            <select class="filter-select" id="user-role-filter" onchange="filterUsersByRole(this.value)">
+                                <option value="all">全部角色</option>
+                                <option value="管理员">管理员</option>
+                                <option value="经理">经理</option>
+                                <option value="普通用户">普通用户</option>
+                            </select>
+                            <input type="text" class="filter-input" placeholder="搜索用户..." oninput="searchUsers(this.value)">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div class="table-title">用户信息</div>
+                            <div class="table-actions">
+                                <button class="action-btn secondary" onclick="batchAction('activate')">
+                                    <i class="fas fa-check"></i>
+                                    批量启用
+                                </button>
+                                <button class="action-btn danger" onclick="batchAction('deactivate')">
+                                    <i class="fas fa-ban"></i>
+                                    批量禁用
+                                </button>
+                                <button class="action-btn danger" onclick="batchAction('delete')">
+                                    <i class="fas fa-trash"></i>
+                                    批量删除
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+                                    </th>
+                                    <th>用户ID</th>
+                                    <th>用户信息</th>
+                                    <th>角色</th>
+                                    <th>状态</th>
+                                    <th>注册时间</th>
+                                    <th>最后登录</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 用户行为统计 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-bar"></i>
+                            用户行为统计
+                        </h2>
+                    </div>
+                    <div class="behavior-stats">
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">平均登录频率</div>
+                                <div class="stat-value">3.2次/天</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">平均停留时间</div>
+                                <div class="stat-value">12.5分钟</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">功能使用率</div>
+                                <div class="stat-value">78.3%</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">用户满意度</div>
+                                <div class="stat-value">4.6/5.0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加用户</h3>
+                <span class="close" onclick="closeAddUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="add-user-form">
+                    <div class="input-group">
+                        <label for="new-username">用户名</label>
+                        <input type="text" id="new-username" required placeholder="请输入用户名">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-email">邮箱</label>
+                        <input type="email" id="new-email" required placeholder="请输入邮箱地址">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-password">密码</label>
+                        <input type="password" id="new-password" required placeholder="请输入密码">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-role">角色</label>
+                        <select id="new-role" required>
+                            <option value="">请选择角色</option>
+                            <option value="管理员">管理员</option>
+                            <option value="经理">经理</option>
+                            <option value="普通用户">普通用户</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-phone">手机号码</label>
+                        <input type="tel" id="new-phone" placeholder="请输入手机号码">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="new-remark">备注</label>
+                        <textarea id="new-remark" rows="3" placeholder="请输入备注信息..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddUserModal()">取消</button>
+                <button class="btn-primary" onclick="saveNewUser()">
+                    <i class="fas fa-save"></i>
+                    添加用户
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑用户模态框 -->
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑用户</h3>
+                <span class="close" onclick="closeEditUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    
+                    <div class="input-group">
+                        <label for="edit-username">用户名</label>
+                        <input type="text" id="edit-username" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-email">邮箱</label>
+                        <input type="email" id="edit-email" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-role">角色</label>
+                        <select id="edit-role" required>
+                            <option value="管理员">管理员</option>
+                            <option value="经理">经理</option>
+                            <option value="普通用户">普通用户</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-status">状态</label>
+                        <select id="edit-status" required>
+                            <option value="active">正常</option>
+                            <option value="inactive">禁用</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-phone">手机号码</label>
+                        <input type="tel" id="edit-phone">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="edit-remark">备注</label>
+                        <textarea id="edit-remark" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditUserModal()">取消</button>
+                <button class="btn-primary" onclick="saveUserChanges()">
+                    <i class="fas fa-save"></i>
+                    保存更改
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='admin/script.js') }}"></script>
+    <style>
+        .behavior-stats {
+            padding: 1rem 0;
+        }
+        
+        .behavior-stats .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .behavior-stats .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .behavior-stats .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .behavior-stats .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        .behavior-stats .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</body>
+</html>
