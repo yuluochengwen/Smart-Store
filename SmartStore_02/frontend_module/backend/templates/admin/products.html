@@ -17,29 +17,29 @@
             </div>
             
             <nav class="sidebar-menu">
-                <a href="{{ url_for('admin_dashboard') }}" class="menu-item">
+                <a href="{{ url_for('admin_dashboard') }}" class="menu-item active">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span class="menu-text">仪表盘</span>
+                    <span class="menu-text">数据统计</span>
                 </a>
                 <a href="{{ url_for('admin_traffic') }}" class="menu-item">
                     <i class="fas fa-users"></i>
-                    <span class="menu-text">人流量监控</span>
+                    <span class="menu-text">远程监控</span>
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
                 </a>
                 <a href="{{ url_for('admin_inventory') }}" class="menu-item">
                     <i class="fas fa-boxes"></i>
                     <span class="menu-text">库存管理</span>
                 </a>
-                <a href="{{ url_for('admin_users') }}" class="menu-item">
-                    <i class="fas fa-user-friends"></i>
-                    <span class="menu-text">用户管理</span>
-                </a>
                 <a href="{{ url_for('admin_orders') }}" class="menu-item">
                     <i class="fas fa-receipt"></i>
                     <span class="menu-text">交易记录</span>
                 </a>
-                <a href="{{ url_for('admin_products') }}" class="menu-item active">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span class="menu-text">商品管理</span>
+                <a href="{{ url_for('admin_users') }}" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
                 </a>
             </nav>
         </aside>

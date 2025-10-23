@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能购物系统 - 仪表盘</title>
+    <title>智能购物系统</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -19,27 +19,27 @@
             <nav class="sidebar-menu">
                 <a href="{{ url_for('admin_dashboard') }}" class="menu-item active">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span class="menu-text">仪表盘</span>
+                    <span class="menu-text">数据统计</span>
                 </a>
                 <a href="{{ url_for('admin_traffic') }}" class="menu-item">
                     <i class="fas fa-users"></i>
-                    <span class="menu-text">人流量监控</span>
+                    <span class="menu-text">远程监控</span>
+                </a>
+                <a href="{{ url_for('admin_products') }}" class="menu-item">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="menu-text">商品管理</span>
                 </a>
                 <a href="{{ url_for('admin_inventory') }}" class="menu-item">
                     <i class="fas fa-boxes"></i>
                     <span class="menu-text">库存管理</span>
                 </a>
-                <a href="{{ url_for('admin_users') }}" class="menu-item">
-                    <i class="fas fa-user-friends"></i>
-                    <span class="menu-text">用户管理</span>
-                </a>
                 <a href="{{ url_for('admin_orders') }}" class="menu-item">
                     <i class="fas fa-receipt"></i>
                     <span class="menu-text">交易记录</span>
                 </a>
-                <a href="{{ url_for('admin_products') }}" class="menu-item">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span class="menu-text">商品管理</span>
+                <a href="{{ url_for('admin_users') }}" class="menu-item">
+                    <i class="fas fa-user-friends"></i>
+                    <span class="menu-text">用户管理</span>
                 </a>
             </nav>
         </aside>
@@ -55,7 +55,7 @@
                     <nav class="breadcrumb">
                         <a href="{{ url_for('admin_dashboard') }}">首页</a>
                         <span>/</span>
-                        <span>仪表盘</span>
+                        <span>数据统计</span>
                     </nav>
                 </div>
                 
@@ -80,7 +80,7 @@
                 <!-- 页面标题 -->
                 <div class="page-header">
                     <div class="page-title">
-                        <h1><i class="fas fa-tachometer-alt"></i> 仪表盘</h1>
+                        <h1><i class="fas fa-tachometer-alt"></i> 数据统计</h1>
                     </div>
                     <div class="page-actions">
                         <button class="action-btn secondary" onclick="refreshData()">
@@ -221,45 +221,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 快速操作 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <i class="fas fa-bolt"></i>
-                            快速操作
-                        </h2>
-                    </div>
-                    <div class="quick-actions">
-                        <div class="action-grid">
-                            <button class="quick-action-btn" onclick="addProduct()">
-                                <i class="fas fa-plus"></i>
-                                <span>添加商品</span>
-                            </button>
-                            <button class="quick-action-btn" onclick="viewOrders()">
-                                <i class="fas fa-receipt"></i>
-                                <span>查看订单</span>
-                            </button>
-                            <button class="quick-action-btn" onclick="manageUsers()">
-                                <i class="fas fa-users"></i>
-                                <span>用户管理</span>
-                            </button>
-                            <button class="quick-action-btn" onclick="checkInventory()">
-                                <i class="fas fa-boxes"></i>
-                                <span>库存检查</span>
-                            </button>
-                            <button class="quick-action-btn" onclick="viewTraffic()">
-                                <i class="fas fa-walking"></i>
-                                <span>人流量监控</span>
-                            </button>
-                            <button class="quick-action-btn" onclick="systemSettings()">
-                                <i class="fas fa-cog"></i>
-                                <span>系统设置</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                </div>                
             </div>
         </main>
     </div>

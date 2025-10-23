@@ -190,6 +190,107 @@
         </div>
     </div>
 
+    <!-- 支付二维码模态框（新增） -->
+    <div id="payment-qrcode-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="payment-title">扫码支付</h2>
+                <span class="close" onclick="closePaymentQrModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="text-align:center">
+                <p id="payment-tip" style="margin-bottom:12px;">请使用手机扫一扫完成支付</p>
+                <div id="qrcode" style="display:inline-block;padding:10px;background:#fff;border-radius:8px;"></div>
+                <div style="margin-top:12px;color:#666;font-size:12px;">
+                    订单金额：￥<span id="qr-amount">0.00</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closePaymentQrModal()">关闭</button>
+                <button class="btn-primary" onclick="onPaidSuccessfully()">我已完成支付</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入二维码库（需在自定义脚本前） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-Mht0Czj8y1sQ2V7y8Q0Qf8w2lE4Hn2mQ8w1xVn8p7uKQW0n9K3m0F7wz0R5CkqN4E2G1o8mZb2iJkqf8b9q2Ww==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="{{ url_for('static', filename='client/script.js') }}"></script>
+
+    <!-- 支付行为脚本（放在最后以便可覆盖同名函数） -->
+    <script>
+    // 获取所选支付方式
+    function getSelectedPaymentMethod() {
+        const el = document.querySelector('input[name="payment"]:checked');
+        return el ? el.value : 'wechat';
+    }
+
+    // 生成支付载荷（演示用；真实应由后端返回二维码内容）
+    function buildPaymentPayload(method, amount, orderId) {
+        const cents = Math.round((Number(amount) || 0) * 100);
+        const oid = orderId || ('OID' + Date.now());
+        switch (method) {
+            case 'wechat':
+                return `WECHATPAY|order=${oid}|fee=${cents}`;
+            case 'alipay':
+                return `ALIPAY|order=${oid}|fee=${cents}`;
+            case 'card':
+                return `CARDPAY|order=${oid}|fee=${cents}`;
+            default:
+                return `PAY|order=${oid}|fee=${cents}`;
+        }
+    }
+
+    let __qrInstance = null;
+
+    function openPaymentQRCode(method) {
+        const modal = document.getElementById('payment-qrcode-modal');
+        const qre = document.getElementById('qrcode');
+        const amountEl = document.getElementById('final-total');
+        const amount = amountEl ? (amountEl.textContent || '0.00') : '0.00';
+
+        const title = document.getElementById('payment-title');
+        const tip = document.getElementById('payment-tip');
+        const human = method === 'wechat' ? '微信支付' : (method === 'alipay' ? '支付宝' : '银行卡');
+        title.textContent = `扫码支付（${human}）`;
+        tip.textContent = `请使用${human}扫一扫完成支付`;
+        document.getElementById('qr-amount').textContent = amount;
+
+        qre.innerHTML = '';
+        const payload = buildPaymentPayload(method, amount);
+        __qrInstance = new QRCode(qre, {
+            text: payload,
+            width: 220,
+            height: 220,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        modal.style.display = 'block';
+    }
+
+    function closePaymentQrModal() {
+        const modal = document.getElementById('payment-qrcode-modal');
+        modal.style.display = 'none';
+    }
+
+    function onPaidSuccessfully() {
+        // TODO: 这里可以调用后端查询支付结果 / 确认订单
+        closePaymentQrModal();
+        alert('支付已提交，请稍后在订单中查看状态。');
+    }
+
+    // 覆盖/实现确认支付：根据当前选择弹出二维码
+    function confirmPayment() {
+        const method = getSelectedPaymentMethod();
+        openPaymentQRCode(method);
+    }
+
+    // 点击遮罩关闭
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('payment-qrcode-modal');
+        if (!modal) return;
+        if (e.target === modal) closePaymentQrModal();
+    });
+    </script>
 </body>
 </html>
